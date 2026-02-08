@@ -30,12 +30,20 @@
                     </select>
                 </div>
 
+                <div class="input-group" style="display: flex; justify-content: space-between; align-items: center;">
+                    <label for="themeToggle" style="margin: 0;">Dark Mode</label>
+                    <label class="switch">
+                        <input type="checkbox" id="themeToggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+
                 <button type="submit" class="btn btn-primary">Save Preferences</button>
             </form>
 
-            <hr style="margin: 24px 0; border: 0; border-top: 1px solid #eee;">
+            <hr class="divider">
 
-            <button id="logoutBtn" class="btn btn-secondary" style="color: #dc3545; border-color: #dc3545;">Log Out</button>
+            <button id="logoutBtn" class="btn btn-danger-outline">Log Out</button>
         </main>
 
         <nav class="bottom-nav">

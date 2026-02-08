@@ -3,6 +3,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const page = path.split('/').pop() || 'index.html';
     const token = localStorage.getItem('trimlyt_token');
 
+    // --- Apply Theme ---
+    const savedTheme = localStorage.getItem('trimlyt_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
     // --- Route Protection ---
     // Pages that don't require auth
     const publicPages = ['index.html', 'dashboard.html', 'appointments.html', 'settings.html'];
@@ -89,13 +93,23 @@ function initSettingsPage() {
     const settingsForm = document.getElementById('settingsForm');
     const goalInput = document.getElementById('monthlyGoal');
     const currencyInput = document.getElementById('currency');
+    const themeToggle = document.getElementById('themeToggle');
 
     // Load saved settings
     const savedGoal = localStorage.getItem('trimlyt_goal');
     const savedCurrency = localStorage.getItem('trimlyt_currency');
+    const savedTheme = localStorage.getItem('trimlyt_theme') || 'light';
 
     if (savedGoal) goalInput.value = savedGoal;
     if (savedCurrency) currencyInput.value = savedCurrency;
+    if (themeToggle) {
+        themeToggle.checked = savedTheme === 'dark';
+        themeToggle.addEventListener('change', (e) => {
+            const newTheme = e.target.checked ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('trimlyt_theme', newTheme);
+        });
+    }
 
     // Save settings
     if (settingsForm) {
