@@ -3,15 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trimlyt</title>
+    <title>Trimlyt - Login</title>
     <link rel="stylesheet" href="styles.css">
-
 </head>
 <body>
-    
-    
-    
+    <div class="container auth-container">
+        <header class="auth-header">
+            <h1>Trimlyt</h1>
+            <p>Performance tracking for barbers.</p>
+        </header>
+
+        <form id="authForm" class="auth-form">
+            <div class="input-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="barber@example.com" required>
+            </div>
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="password.." required>
+            </div>
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-primary">Log In</button>
+                <button type="button" class="btn btn-secondary" id="signupBtn">Sign Up</button>
+            </div>
+        </form>
+        <footer class="app-footer">
+            <p>Trimlyt &copy; 2026 <strong>Version 1.0</strong></p>
+        </footer>
+    </div>
     <script src="main.js"></script>
-    
 </body>
 </html>
