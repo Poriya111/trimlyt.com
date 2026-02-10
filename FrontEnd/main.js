@@ -89,19 +89,21 @@ function initAuthPage() {
 }
 
 function initSettingsPage() {
-    const logoutBtn = document.getElementById('logoutBtn');
     const settingsForm = document.getElementById('settingsForm');
     const goalInput = document.getElementById('monthlyGoal');
     const currencyInput = document.getElementById('currency');
+    const autoCompleteInput = document.getElementById('autoCompleteStatus');
     const themeToggle = document.getElementById('themeToggle');
 
     // Load saved settings
     const savedGoal = localStorage.getItem('trimlyt_goal');
     const savedCurrency = localStorage.getItem('trimlyt_currency');
+    const savedAutoComplete = localStorage.getItem('trimlyt_auto_complete');
     const savedTheme = localStorage.getItem('trimlyt_theme') || 'light';
 
     if (savedGoal) goalInput.value = savedGoal;
     if (savedCurrency) currencyInput.value = savedCurrency;
+    if (savedAutoComplete) autoCompleteInput.value = savedAutoComplete;
     if (themeToggle) {
         themeToggle.checked = savedTheme === 'dark';
         themeToggle.addEventListener('change', (e) => {
@@ -117,16 +119,12 @@ function initSettingsPage() {
             e.preventDefault();
             localStorage.setItem('trimlyt_goal', goalInput.value);
             localStorage.setItem('trimlyt_currency', currencyInput.value);
+            localStorage.setItem('trimlyt_auto_complete', autoCompleteInput.value);
             alert('Settings saved!');
         });
     }
 
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-            localStorage.removeItem('trimlyt_token');
-            window.location.href = 'index.html';
-        });
-    }
+    initProfileLogic();
 }
 
 function initAppointmentsPage() {
@@ -137,10 +135,36 @@ function initAppointmentsPage() {
     const addBtn = document.getElementById('addAppointmentBtn');
     const addForm = document.getElementById('addAppointmentForm');
     const moreBtns = document.querySelectorAll('.btn-more');
+    const dateInput = document.getElementById('dateInput');
+
+    const btnNoShow = document.getElementById('btnNoShow');
+    const btnFinish = document.getElementById('btnFinish');
+
+    // Function to handle button visibility based on time
+    const updateActionModalState = (appointmentDateStr) => {
+        if (!appointmentDateStr) return;
+
+        const appointmentTime = new Date(appointmentDateStr).getTime();
+        const now = Date.now();
+
+        // If appointment is in the future (before the appointment time)
+        if (now < appointmentTime) {
+            // Disable/Hide options that don't make sense yet
+            if (btnNoShow) btnNoShow.style.display = 'none';
+            if (btnFinish) btnFinish.style.display = 'none';
+        } else {
+            // Show all options
+            if (btnNoShow) btnNoShow.style.display = 'block';
+            if (btnFinish) btnFinish.style.display = 'block';
+        }
+    };
 
     // Open Modal
     moreBtns.forEach(btn => {
         btn.addEventListener('click', () => {
+            // In the future, we will get the date from the clicked appointment item
+            // const dateStr = btn.closest('.appointment-item').dataset.date;
+            // updateActionModalState(dateStr);
             modal.classList.remove('hidden');
         });
     });
@@ -181,6 +205,42 @@ function initAppointmentsPage() {
             addForm.reset();
         });
     }
+
+    if (dateInput) {
+        dateInput.addEventListener('click', () => {
+            if ('showPicker' in HTMLInputElement.prototype) {
+                dateInput.showPicker();
+            }
+        });
+    }
+
+    initProfileLogic();
+}
+
+function initProfileLogic() {
+    const profileBtn = document.getElementById('profileBtn');
+    const profileModal = document.getElementById('profileModal');
+    const closeProfileBtn = document.getElementById('closeProfileModal');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    if (profileBtn && profileModal) {
+        profileBtn.addEventListener('click', () => {
+            profileModal.classList.remove('hidden');
+        });
+    }
+
+    if (closeProfileBtn && profileModal) {
+        closeProfileBtn.addEventListener('click', () => {
+            profileModal.classList.add('hidden');
+        });
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('trimlyt_token');
+            window.location.href = 'index.html';
+        });
+    }
 }
 
 function initDashboardPage() {
@@ -188,6 +248,7 @@ function initDashboardPage() {
     const addModal = document.getElementById('addModal');
     const closeAddBtn = document.getElementById('closeAddModal');
     const addForm = document.getElementById('addAppointmentForm');
+    const dateInput = document.getElementById('dateInput');
 
     if (quickAddBtn) {
         quickAddBtn.addEventListener('click', () => {
@@ -210,4 +271,14 @@ function initDashboardPage() {
             addForm.reset();
         });
     }
+
+    if (dateInput) {
+        dateInput.addEventListener('click', () => {
+            if ('showPicker' in HTMLInputElement.prototype) {
+                dateInput.showPicker();
+            }
+        });
+    }
+
+    initProfileLogic();
 }
