@@ -70,21 +70,50 @@ function initAuthPage() {
         
         const email = emailInput.value;
         const password = passwordInput.value;
+        const endpoint = isSignup 
+            ? 'http://localhost:5000/api/auth/register' 
+            : 'http://localhost:5000/api/auth/login';
 
-        // Simulate Backend Call
         submitBtn.disabled = true;
         submitBtn.textContent = 'Processing...';
 
-        // Simulate network delay (Mocking Backend)
-        setTimeout(() => {
-            console.log(`${isSignup ? 'Signup' : 'Login'} successful for ${email}`);
-            
-            // Store Mock Token
-            localStorage.setItem('trimlyt_token', 'mock_token_' + Date.now());
-            
-            // Redirect to Dashboard
-            window.location.href = 'dashboard.html';
-        }, 800);
+        try {
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.msg || data.error || 'Something went wrong');
+            }
+
+            if (isSignup) {
+                alert('Account created successfully! Please log in.');
+                // Switch back to login mode
+                signupBtn.click();
+            } else {
+                // Login Success
+                localStorage.setItem('trimlyt_token', data.token);
+                
+                // Save user settings locally
+                if (data.user && data.user.settings) {
+                    localStorage.setItem('trimlyt_currency', data.user.settings.currency);
+                    localStorage.setItem('trimlyt_goal', data.user.settings.monthlyGoal);
+                    localStorage.setItem('trimlyt_auto_complete', data.user.settings.autoCompleteStatus);
+                    localStorage.setItem('trimlyt_theme', data.user.settings.theme);
+                }
+
+                window.location.href = 'dashboard.html';
+            }
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = isSignup ? 'Create Account' : 'Log In';
+        }
     });
 }
 
