@@ -163,7 +163,7 @@ function initAppointmentsPage() {
     const closeAddBtn = document.getElementById('closeAddModal');
     const addBtn = document.getElementById('addAppointmentBtn');
     const addForm = document.getElementById('addAppointmentForm');
-    const moreBtns = document.querySelectorAll('.btn-more');
+    const list = document.getElementById('appointmentList');
     const dateInput = document.getElementById('dateInput');
 
     const btnNoShow = document.getElementById('btnNoShow');
@@ -188,15 +188,14 @@ function initAppointmentsPage() {
         }
     };
 
-    // Open Modal
-    moreBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            // In the future, we will get the date from the clicked appointment item
-            // const dateStr = btn.closest('.appointment-item').dataset.date;
-            // updateActionModalState(dateStr);
-            modal.classList.remove('hidden');
+    // Open Modal (Event Delegation)
+    if (list) {
+        list.addEventListener('click', (e) => {
+            if (e.target.classList.contains('btn-more')) {
+                modal.classList.remove('hidden');
+            }
         });
-    });
+    }
 
     // Close Modal
     if (closeBtn) {
@@ -226,13 +225,7 @@ function initAppointmentsPage() {
     }
 
     if (addForm) {
-        addForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            // Logic to save data will go here
-            console.log('Adding appointment...');
-            addModal.classList.add('hidden');
-            addForm.reset();
-        });
+        addForm.addEventListener('submit', (e) => handleAppointmentSubmit(e, addModal));
     }
 
     if (dateInput) {
@@ -244,6 +237,7 @@ function initAppointmentsPage() {
     }
 
     initProfileLogic();
+    loadAppointments();
 }
 
 function initProfileLogic() {
@@ -292,13 +286,7 @@ function initDashboardPage() {
     }
 
     if (addForm) {
-        addForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            // Logic to save data will go here
-            console.log('Adding appointment from Dashboard...');
-            addModal.classList.add('hidden');
-            addForm.reset();
-        });
+        addForm.addEventListener('submit', (e) => handleAppointmentSubmit(e, addModal));
     }
 
     if (dateInput) {
@@ -310,4 +298,79 @@ function initDashboardPage() {
     }
 
     initProfileLogic();
+}
+
+async function handleAppointmentSubmit(e, modal) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const service = document.getElementById('serviceInput').value;
+    const price = document.getElementById('priceInput').value;
+    const date = document.getElementById('dateInput').value;
+    const extras = document.getElementById('extrasInput').value;
+    const token = localStorage.getItem('trimlyt_token');
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
+
+    try {
+        const res = await fetch('http://localhost:5000/api/appointments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-auth-token': token
+            },
+            body: JSON.stringify({ service, price, date, extras })
+        });
+
+        if (!res.ok) throw new Error('Failed to save appointment');
+
+        alert('Appointment saved!');
+        if (modal) modal.classList.add('hidden');
+        form.reset();
+        window.location.reload(); // Reload to eventually show the new data
+    } catch (err) {
+        alert('Error saving appointment: ' + err.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    }
+}
+
+async function loadAppointments() {
+    const listContainer = document.getElementById('appointmentList');
+    if (!listContainer) return;
+
+    const token = localStorage.getItem('trimlyt_token');
+    const currency = localStorage.getItem('trimlyt_currency') || '$';
+
+    try {
+        const res = await fetch('http://localhost:5000/api/appointments', {
+            headers: { 'x-auth-token': token }
+        });
+        const appointments = await res.json();
+
+        if (appointments.length === 0) {
+            // Keep the empty state from HTML if no appointments
+            return;
+        }
+
+        listContainer.innerHTML = appointments.map(app => `
+            <div class="appointment-item">
+                <div class="appointment-info">
+                    <h4>${app.service}</h4>
+                    <p>${new Date(app.date).toLocaleString()}</p>
+                </div>
+                <div class="appointment-right">
+                    <span class="appointment-price">${currency}${app.price}</span>
+                    <button class="btn-more">⋮</button>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (err) {
+        console.error('Error loading appointments:', err);
+    }
 }
