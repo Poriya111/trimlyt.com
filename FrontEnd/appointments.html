@@ -10,8 +10,15 @@
     <div class="app-container">
         <header class="app-header header-with-action">
             <h2>History</h2>
-            <button id="addAppointmentBtn" class="btn btn-primary btn-sm">+ Add</button>
+            <div style="display: flex; gap: 8px;">
+                <button id="walkInBtn" class="btn btn-secondary btn-sm">Walk-in</button>
+                <button id="addAppointmentBtn" class="btn btn-primary btn-sm">+ Add</button>
+            </div>
         </header>
+
+        <div style="padding: 16px 16px 0;">
+            <input type="text" id="searchInput" placeholder="Search appointments..." class="search-input">
+        </div>
 
         <main class="content">
             <!-- List of Appointments -->
@@ -21,6 +28,7 @@
                     <p style="font-size: 0.9rem; opacity: 0.8;">Tap "+ Add" to track your first cut.</p>
                 </div>
             </div>
+            <button id="loadMoreBtn" class="btn btn-secondary btn-sm" style="margin: 20px auto; display: none; width: auto;">Load More</button>
         </main>
 
         <!-- Add Appointment Modal -->
@@ -54,10 +62,11 @@
         <div id="actionModal" class="modal hidden">
             <div class="modal-content">
                 <h3>Options</h3>
-                <button id="btnNoShow" class="btn-option">User didn't show up</button>
                 <button id="btnFinish" class="btn-option">Appointment Finished</button>
-                <button id="btnCancel" class="btn-option">Canceled</button>
                 <button id="btnEdit" class="btn-option">Edit Appointment</button>
+                <button id="btnNoShow" class="btn-option">User didn't show up</button>
+                <button id="btnCancel" class="btn-option">Canceled</button>
+                <button id="btnReset" class="btn-option" style="display: none;">Set to Scheduled</button>
                 <button id="btnDelete" class="btn-option btn-danger">Delete Appointment</button>
                 <button id="closeModal" class="btn btn-text">Cancel</button>
             </div>

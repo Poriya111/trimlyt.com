@@ -18,17 +18,23 @@
             <form id="settingsForm">
                 <div class="input-group">
                     <label for="monthlyGoal">Monthly Revenue Goal</label>
-                    <input type="number" id="monthlyGoal" placeholder="5000" required>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" id="monthlyGoal" placeholder="5000" required>
+                        <button type="button" id="saveGoalBtn" class="btn btn-primary btn-sm" style="width: auto; margin-bottom: 0;">Save</button>
+                    </div>
                 </div>
                 
                 <div class="input-group">
                     <label for="currency">Currency</label>
-                    <select id="currency">
-                        <option value="$">USD ($)</option>
-                        <option value="€">EUR (€)</option>
-                        <option value="£">GBP (£)</option>
-                        <option value="CA$">CAD (CA$)</option>
-                    </select>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="currency">
+                            <option value="$">USD ($)</option>
+                            <option value="€">EUR (€)</option>
+                            <option value="£">GBP (£)</option>
+                            <option value="CA$">CAD (CA$)</option>
+                        </select>
+                        <button type="button" id="saveCurrencyBtn" class="btn btn-primary btn-sm" style="width: auto; margin-bottom: 0;">Save</button>
+                    </div>
                 </div>
 
                 <div class="input-group">
@@ -48,8 +54,6 @@
                         <span class="slider round"></span>
                     </label>
                 </div>
-
-                <button type="submit" class="btn btn-primary">Save Preferences</button>
             </form>
         </main>
 
@@ -58,8 +62,8 @@
             <div class="modal-content">
                 <h3>Account</h3>
                 <p style="text-align: center; margin-bottom: 24px; color: var(--text-muted);">barber@example.com</p>
-                <button class="btn-option">Edit Profile</button>
-                <button class="btn-option">Subscription</button>
+                <a href="profile.html" class="btn-option" style="text-decoration: none;">Edit Profile</a>
+                <a href="subscription.html" class="btn-option" style="text-decoration: none;">Subscription</a>
                 <button id="logoutBtn" class="btn-option btn-danger">Log Out</button>
                 <button id="closeProfileModal" class="btn btn-text">Close</button>
             </div>
