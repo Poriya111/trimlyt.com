@@ -10,20 +10,34 @@
     <div class="app-container">
         <header class="app-header header-with-action">
             <div style="display: flex; align-items: center; gap: 12px;">
-                <h2 style="margin: 0;">Subscription</h2>
+                <h2 style="margin: 0;" data-i18n="subscription">Subscription</h2>
+                <button id="infoBtn" class="btn-icon" style="color: var(--text-muted); font-size: 1.2rem;">ⓘ</button>
             </div>
         </header>
 
         <main class="content">
             <div class="empty-state">
-                <p>Subscription management coming soon.</p>
+                <p data-i18n="sub_coming_soon">Subscription management coming soon.</p>
             </div>
         </main>
 
+        <!-- Info Modal -->
+        <div id="infoModal" class="modal hidden">
+            <div class="modal-content">
+                <h3 data-i18n="subscription_guide">Subscription Guide</h3>
+                <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 24px;" data-i18n="subscription_guide_text">
+                    Manage your Trimlyt plan.
+                    <br><br>
+                    View your current status and upgrade to unlock premium features.
+                </p>
+                <button id="closeInfoModal" class="btn btn-primary" data-i18n="got_it">Got it</button>
+            </div>
+        </div>
+
         <nav class="bottom-nav">
-            <a href="dashboard.html" class="nav-item">Dashboard</a>
-            <a href="appointments.html" class="nav-item">Appointments</a>
-            <a href="settings.html" class="nav-item">Settings</a>
+            <a href="dashboard.html" class="nav-item" data-i18n="dashboard">Dashboard</a>
+            <a href="appointments.html" class="nav-item" data-i18n="history">Appointments</a>
+            <a href="settings.html" class="nav-item" data-i18n="settings">Settings</a>
         </nav>
     </div>
     <script src="main.js"></script>

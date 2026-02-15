@@ -10,22 +10,25 @@
 <body>
     <div class="app-container">
         <header class="app-header header-with-action">
-            <h2>Settings</h2>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <h2 data-i18n="settings">Settings</h2>
+                <button id="infoBtn" class="btn-icon" style="color: var(--text-muted); font-size: 1.2rem;">ⓘ</button>
+            </div>
             <div id="profileBtn" class="profile-pic-placeholder"></div>
         </header>
 
         <main class="content">
             <form id="settingsForm">
                 <div class="input-group">
-                    <label for="monthlyGoal">Monthly Revenue Goal</label>
+                    <label for="monthlyGoal" data-i18n="monthly_goal">Monthly Revenue Goal</label>
                     <div style="display: flex; gap: 10px;">
                         <input type="number" id="monthlyGoal" placeholder="5000" required>
-                        <button type="button" id="saveGoalBtn" class="btn btn-primary btn-sm" style="width: auto; margin-bottom: 0;">Save</button>
+                        <button type="button" id="saveGoalBtn" class="btn btn-primary btn-sm" style="width: auto; margin-bottom: 0;" data-i18n="save">Save</button>
                     </div>
                 </div>
                 
                 <div class="input-group">
-                    <label for="currency">Currency</label>
+                    <label for="currency" data-i18n="currency">Currency</label>
                     <div style="display: flex; gap: 10px;">
                         <select id="currency">
                             <option value="$">USD ($)</option>
@@ -33,22 +36,58 @@
                             <option value="£">GBP (£)</option>
                             <option value="CA$">CAD (CA$)</option>
                         </select>
-                        <button type="button" id="saveCurrencyBtn" class="btn btn-primary btn-sm" style="width: auto; margin-bottom: 0;">Save</button>
+                        <button type="button" id="saveCurrencyBtn" class="btn btn-primary btn-sm" style="width: auto; margin-bottom: 0;" data-i18n="save">Save</button>
                     </div>
                 </div>
 
                 <div class="input-group">
-                    <label for="autoCompleteStatus">Auto-Complete Appointments</label>
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">If an appointment time passes without a manual update, automatically set the status to:</p>
-                    <select id="autoCompleteStatus">
-                        <option value="finished">Finished (Default)</option>
-                        <option value="canceled">Canceled</option>
-                        <option value="noshow">Didn't Show Up</option>
-                    </select>
+                    <label for="language" data-i18n="language">Language</label>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="language">
+                            <option value="en">English</option>
+                            <option value="de">German</option>
+                            <option value="nl">Dutch</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
+                            <option value="fa">Persian</option>
+                            <option value="pt">Portuguese</option>
+                            <option value="hi">Indian (Hindi)</option>
+                        </select>
+                        <button type="button" id="saveLanguageBtn" class="btn btn-primary btn-sm" style="width: auto; margin-bottom: 0;" data-i18n="save">Save</button>
+                    </div>
                 </div>
 
+                <div class="input-group">
+                    <label for="appointmentGap" data-i18n="gap">Minimum Appointment Gap</label>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="appointmentGap">
+                            <option value="0" data-i18n="no_gap">No Gap</option>
+                            <option value="15">15 Minutes</option>
+                            <option value="30">30 Minutes</option>
+                            <option value="45">45 Minutes</option>
+                            <option value="60" data-i18n="hour_default">1 Hour (Default)</option>
+                            <option value="75">1 Hour 15 Min</option>
+                            <option value="90">1 Hour 30 Min</option>
+                            <option value="105">1 Hour 45 Min</option>
+                            <option value="120">2 Hours</option>
+                            <option value="150">2 Hours 30 Min</option>
+                        </select>
+                        <button type="button" id="saveGapBtn" class="btn btn-primary btn-sm" style="width: auto; margin-bottom: 0;" data-i18n="save">Save</button>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="autoCompleteStatus" data-i18n="auto_complete">Auto-Complete Appointments</label>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;" data-i18n="auto_complete_desc">If an appointment time passes without a manual update, automatically set the status to:</p>
+                    <select id="autoCompleteStatus">
+                        <option value="finished" data-i18n="finished_default">Finished (Default)</option>
+                        <option value="canceled" data-i18n="canceled">Canceled</option>
+                        <option value="noshow" data-i18n="didnt_show_up">Didn't Show Up</option>
+                    </select>
+                </div>
+<br>
+
                 <div class="input-group" style="display: flex; justify-content: space-between; align-items: center;">
-                    <label for="themeToggle" style="margin: 0;">Dark Mode</label>
+                    <label for="themeToggle" style="margin: 0;" data-i18n="dark_mode">Dark Mode</label>
                     <label class="switch">
                         <input type="checkbox" id="themeToggle">
                         <span class="slider round"></span>
@@ -60,19 +99,34 @@
         <!-- Profile / Account Modal -->
         <div id="profileModal" class="modal hidden">
             <div class="modal-content">
-                <h3>Account</h3>
+                <h3 data-i18n="account">Account</h3>
                 <p style="text-align: center; margin-bottom: 24px; color: var(--text-muted);">barber@example.com</p>
-                <a href="profile.html" class="btn-option" style="text-decoration: none;">Edit Profile</a>
-                <a href="subscription.html" class="btn-option" style="text-decoration: none;">Subscription</a>
-                <button id="logoutBtn" class="btn-option btn-danger">Log Out</button>
-                <button id="closeProfileModal" class="btn btn-text">Close</button>
+                <a href="profile.html" class="btn-option" style="text-decoration: none;" data-i18n="edit_profile">Edit Profile</a>
+                <a href="subscription.html" class="btn-option" style="text-decoration: none;" data-i18n="subscription">Subscription</a>
+                <button id="logoutBtn" class="btn-option btn-danger" data-i18n="logout">Log Out</button>
+                <button id="closeProfileModal" class="btn btn-text" data-i18n="close">Close</button>
+            </div>
+        </div>
+
+        <!-- Info Modal -->
+        <div id="infoModal" class="modal hidden">
+            <div class="modal-content">
+                <h3 data-i18n="settings_guide">Settings Guide</h3>
+                <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 24px;" data-i18n="settings_guide_text">
+                    Customize the app to fit your workflow.
+                    <br><br>
+                    • <strong>Monthly Goal:</strong> The revenue target used for the progress bar on the Dashboard.<br>
+                    • <strong>Appointment Gap:</strong> The mandatory buffer time between bookings to prevent conflicts.<br>
+                    • <strong>Auto-Complete:</strong> If you forget to update an appointment, the app will automatically set it to this status (e.g., 'Finished') after 1 hour.
+                </p>
+                <button id="closeInfoModal" class="btn btn-primary" data-i18n="got_it">Got it</button>
             </div>
         </div>
 
         <nav class="bottom-nav">
-            <a href="dashboard.html" class="nav-item">Dashboard</a>
-            <a href="appointments.html" class="nav-item">Appointments</a>
-            <a href="settings.html" class="nav-item active">Settings</a>
+            <a href="dashboard.html" class="nav-item" data-i18n="dashboard">Dashboard</a>
+            <a href="appointments.html" class="nav-item" data-i18n="history">Appointments</a>
+            <a href="settings.html" class="nav-item active" data-i18n="settings">Settings</a>
         </nav>
     </div>
     <script src="main.js"></script>

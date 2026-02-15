@@ -11,6 +11,26 @@ router.post('/', auth, async (req, res) => {
     try {
         const { service, price, date, extras, status } = req.body;
 
+        // Check for time conflicts based on user settings
+        if (status !== 'Canceled') {
+            const user = await User.findById(req.user.id);
+            const gapMinutes = user.settings.appointmentGap !== undefined ? user.settings.appointmentGap : 60;
+
+            if (gapMinutes > 0) {
+                const gapMs = gapMinutes * 60 * 1000;
+                const newTime = new Date(date).getTime();
+                const conflict = await Appointment.findOne({
+                    userId: req.user.id,
+                    status: { $ne: 'Canceled' },
+                    date: { $gt: new Date(newTime - gapMs), $lt: new Date(newTime + gapMs) }
+                });
+
+                if (conflict) {
+                    return res.status(400).json({ msg: `Time conflict! Minimum gap is ${gapMinutes} minutes.` });
+                }
+            }
+        }
+
         const newAppointment = new Appointment({
             userId: req.user.id,
             service,
@@ -116,6 +136,27 @@ router.put('/:id', auth, async (req, res) => {
     if (status) appointmentFields.status = status;
 
     try {
+        // Check for time conflicts if date is being updated
+        if (date && status !== 'Canceled') {
+            const user = await User.findById(req.user.id);
+            const gapMinutes = user.settings.appointmentGap !== undefined ? user.settings.appointmentGap : 60;
+
+            if (gapMinutes > 0) {
+                const gapMs = gapMinutes * 60 * 1000;
+                const newTime = new Date(date).getTime();
+                const conflict = await Appointment.findOne({
+                    userId: req.user.id,
+                    _id: { $ne: req.params.id }, // Exclude current appointment
+                    status: { $ne: 'Canceled' },
+                    date: { $gt: new Date(newTime - gapMs), $lt: new Date(newTime + gapMs) }
+                });
+
+                if (conflict) {
+                    return res.status(400).json({ msg: `Time conflict! Minimum gap is ${gapMinutes} minutes.` });
+                }
+            }
+        }
+
         let appointment = await Appointment.findById(req.params.id);
 
         if (!appointment) return res.status(404).json({ msg: 'Appointment not found' });

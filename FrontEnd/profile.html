@@ -10,7 +10,8 @@
     <div class="app-container">
         <header class="app-header header-with-action">
             <div style="display: flex; align-items: center; gap: 12px;">
-                <h2 style="margin: 0;">Edit Profile</h2>
+                <h2 style="margin: 0;" data-i18n="edit_profile">Edit Profile</h2>
+                <button id="infoBtn" class="btn-icon" style="color: var(--text-muted); font-size: 1.2rem;">ⓘ</button>
             </div>
         </header>
 
@@ -24,28 +25,42 @@
                 </div>
 
                 <div class="input-group">
-                    <label for="profileEmail">Email</label>
-                    <input type="email" id="profileEmail" placeholder="barber@example.com" disabled style="opacity: 0.7;">
+                    <label for="profileEmail" data-i18n="email">Email</label>
+                    <input type="email" id="profileEmail" placeholder="barber@example.com" disabled style="opacity: 0.7;" data-i18n="email">
                 </div>
                 
                 <div class="input-group">
-                    <label for="newPassword">New Password</label>
-                    <input type="password" id="newPassword" placeholder="Enter new password">
+                    <label for="newPassword" data-i18n="new_password">New Password</label>
+                    <input type="password" id="newPassword" placeholder="Enter new password" data-i18n="new_password">
                 </div>
                 
                 <div class="input-group">
-                    <label for="confirmPassword">Confirm Password</label>
-                    <input type="password" id="confirmPassword" placeholder="Confirm new password">
+                    <label for="confirmPassword" data-i18n="confirm_password">Confirm Password</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirm new password" data-i18n="confirm_password">
                 </div>
 
-                <button type="submit" class="btn btn-primary">Update Profile</button>
+                <button type="submit" class="btn btn-primary" data-i18n="update_profile">Update Profile</button>
             </form>
         </main>
 
+        <!-- Info Modal -->
+        <div id="infoModal" class="modal hidden">
+            <div class="modal-content">
+                <h3 data-i18n="profile_guide">Profile Guide</h3>
+                <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 24px;" data-i18n="profile_guide_text">
+                    Update your account information.
+                    <br><br>
+                    • <strong>Avatar:</strong> Tap the camera icon to upload a custom profile picture.<br>
+                    • <strong>Security:</strong> Update your password here. You will stay logged in after changing it.
+                </p>
+                <button id="closeInfoModal" class="btn btn-primary" data-i18n="got_it">Got it</button>
+            </div>
+        </div>
+
         <nav class="bottom-nav">
-            <a href="dashboard.html" class="nav-item">Dashboard</a>
-            <a href="appointments.html" class="nav-item">Appointments</a>
-            <a href="settings.html" class="nav-item">Settings</a>
+            <a href="dashboard.html" class="nav-item" data-i18n="dashboard">Dashboard</a>
+            <a href="appointments.html" class="nav-item" data-i18n="history">Appointments</a>
+            <a href="settings.html" class="nav-item" data-i18n="settings">Settings</a>
         </nav>
     </div>
     <script src="main.js"></script>

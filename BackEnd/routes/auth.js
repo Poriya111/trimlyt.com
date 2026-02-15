@@ -51,7 +51,8 @@ router.post('/login', async (req, res) => {
         res.json({ token, user: { 
             id: user._id, 
             email: user.email, 
-            settings: user.settings
+            settings: user.settings,
+            avatar: user.avatar
         } });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -61,7 +62,7 @@ router.post('/login', async (req, res) => {
 // Update User Settings
 router.put('/settings', auth, async (req, res) => {
     try {
-        const { currency, monthlyGoal, autoCompleteStatus, theme } = req.body;
+        const { currency, monthlyGoal, autoCompleteStatus, theme, appointmentGap, language } = req.body;
         
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ msg: 'User not found' });
@@ -70,6 +71,8 @@ router.put('/settings', auth, async (req, res) => {
         if (monthlyGoal) user.settings.monthlyGoal = monthlyGoal;
         if (autoCompleteStatus) user.settings.autoCompleteStatus = autoCompleteStatus;
         if (theme) user.settings.theme = theme;
+        if (appointmentGap !== undefined) user.settings.appointmentGap = appointmentGap;
+        if (language) user.settings.language = language;
 
         await user.save();
         res.json(user.settings);

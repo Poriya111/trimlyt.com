@@ -9,22 +9,22 @@
 <body>
     <div class="container auth-container">
         <header class="auth-header">
-            <h1>Trimlyt</h1>
-            <p>Performance tracking for barbers.</p>
+            <h1 data-i18n="login_title">Trimlyt</h1>
+            <p data-i18n="login_desc">Performance tracking for barbers.</p>
         </header>
 
         <form id="authForm" class="auth-form">
             <div class="input-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="barber@example.com" required>
+                <label for="email" data-i18n="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="barber@example.com" required data-i18n="email">
             </div>
             <div class="input-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="password.." required>
+                <label for="password" data-i18n="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="password.." required data-i18n="password">
             </div>
             <div class="action-buttons">
-                <button type="submit" class="btn btn-primary">Log In</button>
-                <button type="button" class="btn btn-secondary" id="signupBtn">Sign Up</button>
+                <button type="submit" class="btn btn-primary" data-i18n="login">Log In</button>
+                <button type="button" class="btn btn-secondary" id="signupBtn" data-i18n="signup">Sign Up</button>
             </div>
         </form>
         <footer class="app-footer">
