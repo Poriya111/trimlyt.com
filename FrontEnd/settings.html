@@ -28,6 +28,11 @@
                 </div>
                 
                 <div class="input-group">
+                    <label data-i18n="services">Services</label>
+                    <button type="button" id="manageServicesBtn" class="btn btn-secondary" data-i18n="manage_services">Manage Services</button>
+                </div>
+
+                <div class="input-group">
                     <label for="currency" data-i18n="currency">Currency</label>
                     <div style="display: flex; gap: 10px;">
                         <select id="currency">
@@ -105,6 +110,27 @@
                 <a href="subscription.html" class="btn-option" style="text-decoration: none;" data-i18n="subscription">Subscription</a>
                 <button id="logoutBtn" class="btn-option btn-danger" data-i18n="logout">Log Out</button>
                 <button id="closeProfileModal" class="btn btn-text" data-i18n="close">Close</button>
+            </div>
+        </div>
+
+        <!-- Services Modal -->
+        <div id="servicesModal" class="modal hidden">
+            <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+                <h3 data-i18n="services_modal_title">My Services</h3>
+                
+                <form id="addServiceForm" style="margin-bottom: 24px; display: flex; gap: 8px;">
+                    <input type="text" id="newServiceName" placeholder="Name" required style="flex: 2;" data-i18n="service_name">
+                    <input type="number" id="newServicePrice" placeholder="Price" required style="flex: 1;" data-i18n="price">
+                    <button type="submit" class="btn btn-primary btn-sm" style="width: auto; margin-bottom: 0;">+</button>
+                </form>
+
+                <div id="servicesList" style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Services will be injected here -->
+                    <div class="empty-state" style="padding: 20px;">
+                        <p data-i18n="no_services_yet">No services added yet.</p>
+                    </div>
+                </div>
+                <button id="closeServicesModal" class="btn btn-text" style="margin-top: 20px;" data-i18n="close">Close</button>
             </div>
         </div>
 

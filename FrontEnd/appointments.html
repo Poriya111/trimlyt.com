@@ -41,7 +41,8 @@
                 <form id="addAppointmentForm">
                     <div class="input-group">
                         <label data-i18n="service">Service</label>
-                        <input type="text" id="serviceInput" placeholder="e.g. Haircut" required data-i18n="service">
+                        <input type="text" id="serviceInput" placeholder="e.g. Haircut" required data-i18n="service" list="serviceOptions">
+                        <datalist id="serviceOptions"></datalist>
                     </div>
                     <div class="input-group">
                         <label data-i18n="price">Price</label>

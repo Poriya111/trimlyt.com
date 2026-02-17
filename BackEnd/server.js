@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const path = require('path');
 const authRoutes = require('./routes/auth');
 const appointmentRoutes = require('./routes/appointments');
+const serviceRoutes = require('./routes/services');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -16,6 +17,7 @@ app.use(express.json({ limit: '50mb' }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/services', serviceRoutes);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI || 'mongodb+srv://poriyaansarimaleki:tRYMLYt123%40@cluster0.dz0niwn.mongodb.net/?appName=Cluster0')

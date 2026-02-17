@@ -177,6 +177,7 @@ function initSettingsPage() {
     const saveGapBtn = document.getElementById('saveGapBtn');
     const languageInput = document.getElementById('language');
     const saveLanguageBtn = document.getElementById('saveLanguageBtn');
+    const manageServicesBtn = document.getElementById('manageServicesBtn');
 
     // Load saved settings
     const savedGoal = localStorage.getItem('trimlyt_goal');
@@ -274,9 +275,92 @@ function initSettingsPage() {
         });
     }
 
+    if (manageServicesBtn) {
+        manageServicesBtn.addEventListener('click', () => {
+            initServicesModal();
+        });
+    }
+
     setupCustomSelects();
 
     initProfileLogic();
+}
+
+function initServicesModal() {
+    const modal = document.getElementById('servicesModal');
+    const closeBtn = document.getElementById('closeServicesModal');
+    const form = document.getElementById('addServiceForm');
+    const list = document.getElementById('servicesList');
+    const token = localStorage.getItem('trimlyt_token');
+    const currency = localStorage.getItem('trimlyt_currency') || '$';
+
+    if (modal) modal.classList.remove('hidden');
+
+    if (closeBtn) {
+        closeBtn.onclick = () => modal.classList.add('hidden');
+    }
+
+    const loadServices = async () => {
+        try {
+            const res = await fetch('/api/services', { headers: { 'x-auth-token': token } });
+            if (!res.ok) return;
+            const services = await res.json();
+            
+            if (services.length === 0) {
+                list.innerHTML = `<div class="empty-state" style="padding: 20px;"><p>${t('no_services_yet')}</p></div>`;
+            } else {
+                list.innerHTML = services.map(s => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.5); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);">
+                        <div><strong>${s.name}</strong> <span style="opacity: 0.7;">${currency}${s.price}</span></div>
+                        <button class="btn-icon" style="color: var(--danger-color); font-size: 1rem;" onclick="deleteService('${s._id}')">✕</button>
+                    </div>
+                `).join('');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    window.deleteService = async (id) => {
+        if (confirm(t('confirm_delete'))) {
+            try {
+                const res = await fetch(`/api/services/${id}`, { method: 'DELETE', headers: { 'x-auth-token': token } });
+                if (res.ok) loadServices();
+                else showNotification('Failed to delete service', 'error');
+            } catch (err) {
+                showNotification('Error deleting service', 'error');
+            }
+        }
+    };
+
+    if (form) {
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('newServiceName').value;
+            const price = document.getElementById('newServicePrice').value;
+            
+            try {
+                const res = await fetch('/api/services', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                    body: JSON.stringify({ name, price })
+                });
+
+                if (!res.ok) throw new Error('Failed to add service');
+                
+                form.reset();
+                loadServices();
+            } catch (err) {
+                if (err.message === 'Failed to fetch') {
+                    showNotification('Connection error. Access via http://localhost:5000', 'error');
+                } else {
+                    showNotification(err.message, 'error');
+                }
+            }
+        };
+    }
+
+    loadServices();
 }
 
 function initAppointmentsPage() {
@@ -554,6 +638,9 @@ function initAppointmentsPage() {
         });
     }
 
+    const token = localStorage.getItem('trimlyt_token');
+    if (token) setupServiceAutocomplete(token);
+
     initProfileLogic();
     loadAppointments(true); // Pass true to reset pagination
 }
@@ -698,59 +785,6 @@ function initProfileLogic() {
             window.location.href = 'index.html';
         });
     }
-}
-
-function initDashboardPage() {
-    const quickAddBtn = document.getElementById('quickAddBtn');
-    const walkInBtn = document.getElementById('walkInBtn');
-    const addModal = document.getElementById('addModal');
-    const closeAddBtn = document.getElementById('closeAddModal');
-    const addForm = document.getElementById('addAppointmentForm');
-    const dateInput = document.getElementById('dateInput');
-
-    if (quickAddBtn) {
-        quickAddBtn.addEventListener('click', () => {
-            const form = document.getElementById('addAppointmentForm');
-            form.reset();
-            form.dataset.mode = 'add';
-            delete form.dataset.editId;
-            addModal.querySelector('h3').textContent = t('new_appointment');
-            form.querySelector('button[type="submit"]').textContent = t('save');
-            
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            document.getElementById('dateInput').min = now.toISOString().slice(0, 16);
-
-            addModal.classList.remove('hidden');
-        });
-    }
-
-    if (walkInBtn) {
-        walkInBtn.addEventListener('click', () => {
-            setupWalkInModal(addForm, addModal, dateInput);
-        });
-    }
-
-    if (closeAddBtn) {
-        closeAddBtn.addEventListener('click', () => {
-            addModal.classList.add('hidden');
-        });
-    }
-
-    if (addForm) {
-        addForm.addEventListener('submit', (e) => handleAppointmentSubmit(e, addModal));
-    }
-
-    if (dateInput) {
-        dateInput.addEventListener('click', () => {
-            if ('showPicker' in HTMLInputElement.prototype) {
-                dateInput.showPicker();
-            }
-        });
-    }
-
-    initProfileLogic();
-    updateDashboardMetrics();
 }
 
 async function handleAppointmentSubmit(e, modal) {
@@ -1422,6 +1456,34 @@ function setupCustomSelects() {
     });
 }
 
+async function setupServiceAutocomplete(token) {
+    const datalist = document.getElementById('serviceOptions');
+    const serviceInput = document.getElementById('serviceInput');
+    const priceInput = document.getElementById('priceInput');
+    
+    if (!datalist || !serviceInput) return;
+
+    try {
+        const res = await fetch('/api/services', { headers: { 'x-auth-token': token } });
+        const services = await res.json();
+        
+        datalist.innerHTML = services.map(s => `<option value="${s.name}" data-price="${s.price}">`).join('');
+
+        const updatePrice = () => {
+            const val = serviceInput.value;
+            const option = Array.from(datalist.options).find(o => o.value === val);
+            if (option && priceInput) {
+                priceInput.value = option.dataset.price;
+            }
+        };
+
+        serviceInput.addEventListener('input', updatePrice);
+        serviceInput.addEventListener('change', updatePrice);
+    } catch (err) {
+        console.error('Failed to load services for autocomplete', err);
+    }
+}
+
 // --- Translation System ---
 const translations = {
     en: {
@@ -1446,6 +1508,11 @@ const translations = {
         walk_in: "Walk-in",
         add: "+ Add",
         search_placeholder: "Search appointments...",
+        services: "Services",
+        manage_services: "Manage Services",
+        services_modal_title: "My Services",
+        service_name: "Service Name",
+        no_services_yet: "No services added yet.",
         no_appointments: "No appointments logged yet.",
         track_first: "Tap \"+ Add\" to track your first cut.",
         load_more: "Load More",
