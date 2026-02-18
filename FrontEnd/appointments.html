@@ -10,9 +10,10 @@
     <div class="app-container">
         <header class="app-header header-with-action">
             <div style="display: flex; align-items: center; gap: 8px;">
-                <h2 data-i18n="history">History</h2>
                 <button id="infoBtn" class="btn-icon" style="color: var(--text-muted); font-size: 1.2rem;">ⓘ</button>
             </div>
+                     <div class="header-logo"><span class="logo-t">T</span>rimlyt</div>
+
             <div style="display: flex; gap: 8px;">
                 <button id="walkInBtn" class="btn btn-secondary btn-sm" data-i18n="walk_in">Walk-in</button>
                 <button id="addAppointmentBtn" class="btn btn-primary btn-sm" data-i18n="add">+ Add</button>
@@ -39,10 +40,10 @@
             <div class="modal-content">
                 <h3 data-i18n="new_appointment">New Appointment</h3>
                 <form id="addAppointmentForm">
-                    <div class="input-group">
+                    <div class="input-group service-autocomplete-group">
                         <label data-i18n="service">Service</label>
-                        <input type="text" id="serviceInput" placeholder="e.g. Haircut" required data-i18n="service" list="serviceOptions">
-                        <datalist id="serviceOptions"></datalist>
+                        <input type="text" id="serviceInput" placeholder="e.g. Haircut" required data-i18n="service">
+                        <div id="serviceDropdown" class="custom-options"></div>
                     </div>
                     <div class="input-group">
                         <label data-i18n="price">Price</label>

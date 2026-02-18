@@ -11,9 +11,9 @@
     <div class="app-container">
         <header class="app-header header-with-action">
             <div style="display: flex; align-items: center; gap: 8px;">
-                <h2 data-i18n="settings">Settings</h2>
                 <button id="infoBtn" class="btn-icon" style="color: var(--text-muted); font-size: 1.2rem;">ⓘ</button>
             </div>
+            <div class="header-logo"><span class="logo-t">T</span>rimlyt</div>
             <div id="profileBtn" class="profile-pic-placeholder"></div>
         </header>
 
@@ -100,7 +100,7 @@
                 </div>
             </form>
         </main>
-
+<br><br><br><br>
         <!-- Profile / Account Modal -->
         <div id="profileModal" class="modal hidden">
             <div class="modal-content">
@@ -117,11 +117,15 @@
         <div id="servicesModal" class="modal hidden">
             <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
                 <h3 data-i18n="services_modal_title">My Services</h3>
-                
-                <form id="addServiceForm" style="margin-bottom: 24px; display: flex; gap: 8px;">
-                    <input type="text" id="newServiceName" placeholder="Name" required style="flex: 2;" data-i18n="service_name">
-                    <input type="number" id="newServicePrice" placeholder="Price" required style="flex: 1;" data-i18n="price">
-                    <button type="submit" class="btn btn-primary btn-sm" style="width: auto; margin-bottom: 0;">+</button>
+
+                <form id="addServiceForm" style="margin-bottom: 24px; display: flex; gap: 8px; align-items: center;">
+                    <div class="input-group" style="flex: 2; margin-bottom: 0;">
+                        <input type="text" id="newServiceName" placeholder="Name" required data-i18n="service_name">
+                    </div>
+                    <div class="input-group" style="flex: 1; margin-bottom: 0;">
+                        <input type="number" id="newServicePrice" placeholder="Price" required data-i18n="price">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="height: 47px; width: 47px; padding: 0; margin-bottom: 0; font-size: 1.5rem; flex-shrink: 0;">+</button>
                 </form>
 
                 <div id="servicesList" style="display: flex; flex-direction: column; gap: 10px;">

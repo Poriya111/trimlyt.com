@@ -303,7 +303,6 @@ function initServicesModal() {
     const loadServices = async () => {
         try {
             const res = await fetch('/api/services', { headers: { 'x-auth-token': token } });
-            if (!res.ok) return;
             const services = await res.json();
             
             if (services.length === 0) {
@@ -322,13 +321,18 @@ function initServicesModal() {
     };
 
     window.deleteService = async (id) => {
-        if (confirm(t('confirm_delete'))) {
+        const confirmed = await showConfirm(t('confirm_delete'), t('delete'), true);
+        if (confirmed) {
             try {
                 const res = await fetch(`/api/services/${id}`, { method: 'DELETE', headers: { 'x-auth-token': token } });
-                if (res.ok) loadServices();
-                else showNotification('Failed to delete service', 'error');
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({}));
+                    throw new Error(errorData.msg || 'Failed to delete service');
+                }
+                loadServices();
+                showNotification(t('service_deleted'), 'success');
             } catch (err) {
-                showNotification('Error deleting service', 'error');
+                showNotification(err.message, 'error');
             }
         }
     };
@@ -338,24 +342,20 @@ function initServicesModal() {
             e.preventDefault();
             const name = document.getElementById('newServiceName').value;
             const price = document.getElementById('newServicePrice').value;
-            
             try {
                 const res = await fetch('/api/services', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                     body: JSON.stringify({ name, price })
                 });
-
-                if (!res.ok) throw new Error('Failed to add service');
-                
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({}));
+                    throw new Error(errorData.msg || 'Failed to add service');
+                }
                 form.reset();
                 loadServices();
             } catch (err) {
-                if (err.message === 'Failed to fetch') {
-                    showNotification('Connection error. Access via http://localhost:5000', 'error');
-                } else {
-                    showNotification(err.message, 'error');
-                }
+                showNotification(err.message, 'error');
             }
         };
     }
@@ -785,6 +785,62 @@ function initProfileLogic() {
             window.location.href = 'index.html';
         });
     }
+}
+
+function initDashboardPage() {
+    const quickAddBtn = document.getElementById('quickAddBtn');
+    const walkInBtn = document.getElementById('walkInBtn');
+    const addModal = document.getElementById('addModal');
+    const closeAddBtn = document.getElementById('closeAddModal');
+    const addForm = document.getElementById('addAppointmentForm');
+    const dateInput = document.getElementById('dateInput');
+
+    if (quickAddBtn) {
+        quickAddBtn.addEventListener('click', () => {
+            const form = document.getElementById('addAppointmentForm');
+            form.reset();
+            form.dataset.mode = 'add';
+            delete form.dataset.editId;
+            addModal.querySelector('h3').textContent = t('new_appointment');
+            form.querySelector('button[type="submit"]').textContent = t('save');
+            
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('dateInput').min = now.toISOString().slice(0, 16);
+
+            addModal.classList.remove('hidden');
+        });
+    }
+
+    if (walkInBtn) {
+        walkInBtn.addEventListener('click', () => {
+            setupWalkInModal(addForm, addModal, dateInput);
+        });
+    }
+
+    if (closeAddBtn) {
+        closeAddBtn.addEventListener('click', () => {
+            addModal.classList.add('hidden');
+        });
+    }
+
+    if (addForm) {
+        addForm.addEventListener('submit', (e) => handleAppointmentSubmit(e, addModal));
+    }
+
+    if (dateInput) {
+        dateInput.addEventListener('click', () => {
+            if ('showPicker' in HTMLInputElement.prototype) {
+                dateInput.showPicker();
+            }
+        });
+    }
+
+    const token = localStorage.getItem('trimlyt_token');
+    if (token) setupServiceAutocomplete(token);
+
+    initProfileLogic();
+    updateDashboardMetrics();
 }
 
 async function handleAppointmentSubmit(e, modal) {
@@ -1457,31 +1513,65 @@ function setupCustomSelects() {
 }
 
 async function setupServiceAutocomplete(token) {
-    const datalist = document.getElementById('serviceOptions');
     const serviceInput = document.getElementById('serviceInput');
     const priceInput = document.getElementById('priceInput');
+    const serviceDropdown = document.getElementById('serviceDropdown');
     
-    if (!datalist || !serviceInput) return;
+    if (!serviceInput || !priceInput || !serviceDropdown) return;
 
+    serviceInput.setAttribute('autocomplete', 'off');
+
+    let services = [];
     try {
         const res = await fetch('/api/services', { headers: { 'x-auth-token': token } });
-        const services = await res.json();
-        
-        datalist.innerHTML = services.map(s => `<option value="${s.name}" data-price="${s.price}">`).join('');
-
-        const updatePrice = () => {
-            const val = serviceInput.value;
-            const option = Array.from(datalist.options).find(o => o.value === val);
-            if (option && priceInput) {
-                priceInput.value = option.dataset.price;
-            }
-        };
-
-        serviceInput.addEventListener('input', updatePrice);
-        serviceInput.addEventListener('change', updatePrice);
+        if (res.ok) services = await res.json();
     } catch (err) {
         console.error('Failed to load services for autocomplete', err);
+        return;
     }
+
+    const renderDropdown = (filteredServices) => {
+        const currency = localStorage.getItem('trimlyt_currency') || '$';
+        if (filteredServices.length === 0) {
+            serviceDropdown.innerHTML = `<div class="custom-option" style="justify-content: center; color: var(--text-muted);">${t('no_matching_services')}</div>`;
+        } else {
+            serviceDropdown.innerHTML = filteredServices.map(s => `
+                <div class="service-option" data-name="${s.name}" data-price="${s.price}">
+                    <span>${s.name}</span>
+                    <span class="service-price">${currency}${s.price}</span>
+                </div>
+            `).join('');
+        }
+
+        serviceDropdown.querySelectorAll('.service-option').forEach(option => {
+            option.addEventListener('click', () => {
+                if (option.dataset.name) {
+                    serviceInput.value = option.dataset.name;
+                    priceInput.value = option.dataset.price;
+                    serviceDropdown.classList.remove('open');
+                }
+            });
+        });
+    };
+
+    serviceInput.addEventListener('focus', () => {
+        renderDropdown(services);
+        serviceDropdown.classList.add('open');
+    });
+
+    serviceInput.addEventListener('input', () => {
+        const searchTerm = serviceInput.value.toLowerCase();
+        const filtered = services.filter(s => s.name.toLowerCase().includes(searchTerm));
+        renderDropdown(filtered);
+        serviceDropdown.classList.add('open');
+    });
+
+    document.addEventListener('click', (e) => {
+        const container = serviceInput.parentElement;
+        if (container && !container.contains(e.target)) {
+            serviceDropdown.classList.remove('open');
+        }
+    });
 }
 
 // --- Translation System ---
@@ -1512,8 +1602,10 @@ const translations = {
         manage_services: "Manage Services",
         services_modal_title: "My Services",
         service_name: "Service Name",
+        service_deleted: "Service deleted.",
         no_services_yet: "No services added yet.",
         no_appointments: "No appointments logged yet.",
+        no_matching_services: "No matching services",
         track_first: "Tap \"+ Add\" to track your first cut.",
         load_more: "Load More",
         settings: "Settings",
@@ -1608,6 +1700,8 @@ const translations = {
         add: "+ Neu",
         search_placeholder: "Termine suchen...",
         no_appointments: "Noch keine Termine.",
+        no_matching_services: "Keine passenden Dienste",
+        service_deleted: "Dienstleistung gelöscht.",
         track_first: "Tippe auf \"+ Neu\" für den ersten Schnitt.",
         load_more: "Mehr laden",
         settings: "Einstellungen",
@@ -1702,6 +1796,8 @@ const translations = {
         add: "+ Nieuw",
         search_placeholder: "Afspraken zoeken...",
         no_appointments: "Nog geen afspraken.",
+        no_matching_services: "Geen overeenkomende diensten",
+        service_deleted: "Dienst verwijderd.",
         track_first: "Tik op \"+ Nieuw\" voor je eerste knipbeurt.",
         load_more: "Meer laden",
         settings: "Instellingen",
@@ -1796,6 +1892,8 @@ const translations = {
         add: "+ Añadir",
         search_placeholder: "Buscar citas...",
         no_appointments: "No hay citas registradas.",
+        no_matching_services: "No hay servicios coincidentes",
+        service_deleted: "Servicio eliminado.",
         track_first: "Toca \"+ Añadir\" para registrar tu primer corte.",
         load_more: "Cargar Más",
         settings: "Ajustes",
@@ -1890,6 +1988,8 @@ const translations = {
         add: "+ Ajouter",
         search_placeholder: "Rechercher rendez-vous...",
         no_appointments: "Aucun rendez-vous enregistré.",
+        no_matching_services: "Aucun service correspondant",
+        service_deleted: "Service supprimé.",
         track_first: "Appuyez sur \"+ Ajouter\" pour suivre votre première coupe.",
         load_more: "Charger Plus",
         settings: "Paramètres",
@@ -1984,6 +2084,8 @@ const translations = {
         add: "+ جدید",
         search_placeholder: "جستجوی نوبت‌ها...",
         no_appointments: "هنوز نوبتی ثبت نشده است.",
+        no_matching_services: "سرویس منطبقی یافت نشد",
+        service_deleted: "سرویس حذف شد.",
         track_first: "برای ثبت اولین اصلاح روی \"+ جدید\" بزنید.",
         load_more: "بارگذاری بیشتر",
         settings: "تنظیمات",
@@ -2078,6 +2180,8 @@ const translations = {
         add: "+ Novo",
         search_placeholder: "Buscar agendamentos...",
         no_appointments: "Nenhum agendamento registrado.",
+        no_matching_services: "Nenhum serviço correspondente",
+        service_deleted: "Serviço excluído.",
         track_first: "Toque em \"+ Novo\" para registrar seu primeiro corte.",
         load_more: "Carregar Mais",
         settings: "Configurações",
@@ -2172,6 +2276,8 @@ const translations = {
         add: "+ नया",
         search_placeholder: "अपॉइंटमेंट खोजें...",
         no_appointments: "अभी तक कोई अपॉइंटमेंट नहीं।",
+        no_matching_services: "कोई मेल खाने वाली सेवा नहीं",
+        service_deleted: "सेवा हटा दी गई।",
         track_first: "अपना पहला कट ट्रैक करने के लिए \"+ नया\" पर टैप करें।",
         load_more: "और लोड करें",
         settings: "सेटिंग्स",
