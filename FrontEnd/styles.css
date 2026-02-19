@@ -68,6 +68,7 @@ body {
     width: 100%;
     padding: var(--spacing-unit);
 }
+
 /* Auth Specific Styles */
 .auth-container {
     flex-direction: column;
@@ -909,7 +910,7 @@ select {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    font-weight: 400;
+    font-weight: 700;
     font-size: 1.5rem;
     color: var(--text-main);
     pointer-events: none;
@@ -917,6 +918,52 @@ select {
 }
 
 .logo-t {
-    color: #907dff;
-    font-weight: 700;
+    color: #7660f1;
+}
+
+/* Analytics Charts */
+.chart-wrapper {
+    display: flex;
+    gap: 12px;
+}
+
+.chart-y-axis {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 140px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-align: right;
+    padding-bottom: 24px;
+}
+
+.chart-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 140px;
+    padding-bottom: 24px;
+    gap: 3px;
+    flex: 1;
+}
+
+.chart-bar {
+    flex: 1;
+    background: var(--primary-gradient);
+    border-radius: 4px 4px 0 0;
+    opacity: 0.8;
+    position: relative;
+    min-height: 4px;
+    transition: height 0.5s ease;
+}
+
+.chart-bar-label {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    white-space: nowrap;
 }

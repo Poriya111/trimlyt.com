@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Route Protection ---
     // Pages that don't require auth
-    const publicPages = ['index.html', 'dashboard.html', 'appointments.html', 'settings.html', 'profile.html', 'subscription.html'];
+    const publicPages = ['index.html'];
     const isPublicPage = publicPages.includes(page);
 
     // If not logged in and trying to access a protected page, redirect to login
@@ -1169,6 +1169,73 @@ async function updateDashboardMetrics() {
         if (goalText) goalText.textContent = `${currency}${realMonth} / ${currency}${goal}`;
         if (goalPercentText) goalPercentText.textContent = `${goalPercent}%`;
 
+        // --- Analytics Logic ---
+        const hours = new Array(24).fill(0);
+        const serviceRevenue = {};
+
+        appointments.forEach(app => {
+            const status = app.status || 'Scheduled';
+            
+            // Busy Hours (Scheduled + Finished)
+            if (status === 'Scheduled' || status === 'Finished') {
+                const d = new Date(app.date);
+                hours[d.getHours()]++;
+            }
+
+            // Service Revenue (Finished only)
+            if (status === 'Finished') {
+                const price = parseFloat(app.price) || 0;
+                const name = app.service;
+                if (!serviceRevenue[name]) serviceRevenue[name] = 0;
+                serviceRevenue[name] += price;
+            }
+        });
+
+        // Render Busy Hours Chart
+        const chartContainer = document.getElementById('busyHoursChart');
+        const yAxisContainer = document.getElementById('busyHoursYAxis');
+        if (chartContainer && yAxisContainer) {
+            const maxVal = Math.max(...hours, 1);
+
+            // Render Y-Axis
+            yAxisContainer.innerHTML = `
+                <span>${maxVal}</span>
+                <span>${Math.ceil(maxVal / 2)}</span>
+                <span>0</span>
+            `;
+
+            chartContainer.innerHTML = hours.map((count, i) => {
+                const h = (count / maxVal) * 100;
+                // Show label for every 6 hours: 0, 6, 12, 18
+                const label = (i % 6 === 0) ? `<span class="chart-bar-label">${i}:00</span>` : '';
+                return `<div class="chart-bar" style="height: ${h}%;" title="${i}:00 - ${count} bookings">${label}</div>`;
+            }).join('');
+        }
+
+        // Render Service Stats
+        let top = { name: '-', val: 0 };
+        let low = { name: '-', val: Infinity };
+        const entries = Object.entries(serviceRevenue);
+        
+        if (entries.length > 0) {
+            entries.forEach(([name, val]) => {
+                if (val > top.val) top = { name, val };
+                if (val < low.val) low = { name, val };
+            });
+        } else {
+            low.val = 0;
+        }
+
+        const topNameEl = document.getElementById('topServiceValue');
+        const topRevEl = document.getElementById('topServiceRevenue');
+        const lowNameEl = document.getElementById('lowServiceValue');
+        const lowRevEl = document.getElementById('lowServiceRevenue');
+
+        if (topNameEl) topNameEl.textContent = top.name;
+        if (topRevEl) topRevEl.textContent = `${currency}${top.val}`;
+        if (lowNameEl) lowNameEl.textContent = low.name;
+        if (lowRevEl) lowRevEl.textContent = entries.length > 0 ? `${currency}${low.val}` : '-';
+
     } catch (err) {
         console.error('Error updating dashboard:', err);
     }
@@ -1594,6 +1661,9 @@ const translations = {
         revenue_month: "This Month",
         expected: "Exp:",
         monthly_goal: "Monthly Goal",
+        busy_hours: "Busy Hours",
+        top_service: "Top Service",
+        lowest_service: "Least Profitable",
         history: "History",
         walk_in: "Walk-in",
         add: "+ Add",
@@ -1695,6 +1765,9 @@ const translations = {
         revenue_month: "Diesen Monat",
         expected: "Erw:",
         monthly_goal: "Monatsziel",
+        busy_hours: "Stoßzeiten",
+        top_service: "Top Service",
+        lowest_service: "Wenigsten Profitabel",
         history: "Verlauf",
         walk_in: "Laufkundschaft",
         add: "+ Neu",
@@ -1791,6 +1864,9 @@ const translations = {
         revenue_month: "Deze Maand",
         expected: "Verw:",
         monthly_goal: "Maanddoel",
+        busy_hours: "Drukke Uren",
+        top_service: "Top Dienst",
+        lowest_service: "Minst Winstgevend",
         history: "Geschiedenis",
         walk_in: "Binnenloop",
         add: "+ Nieuw",
@@ -1887,6 +1963,9 @@ const translations = {
         revenue_month: "Este Mes",
         expected: "Esp:",
         monthly_goal: "Meta Mensual",
+        busy_hours: "Horas Punta",
+        top_service: "Servicio Top",
+        lowest_service: "Menos Rentable",
         history: "Historial",
         walk_in: "Sin Cita",
         add: "+ Añadir",
@@ -1983,6 +2062,9 @@ const translations = {
         revenue_month: "Ce Mois",
         expected: "Prév:",
         monthly_goal: "Objectif Mensuel",
+        busy_hours: "Heures de Pointe",
+        top_service: "Meilleur Service",
+        lowest_service: "Moins Rentable",
         history: "Historique",
         walk_in: "Sans RDV",
         add: "+ Ajouter",
@@ -2079,6 +2161,9 @@ const translations = {
         revenue_month: "این ماه",
         expected: "مورد انتظار:",
         monthly_goal: "هدف ماهانه",
+        busy_hours: "ساعات شلوغی",
+        top_service: "بهترین سرویس",
+        lowest_service: "کم‌سودترین",
         history: "تاریخچه",
         walk_in: "حضوری",
         add: "+ جدید",
@@ -2175,6 +2260,9 @@ const translations = {
         revenue_month: "Este Mês",
         expected: "Exp:",
         monthly_goal: "Meta Mensal",
+        busy_hours: "Horários de Pico",
+        top_service: "Melhor Serviço",
+        lowest_service: "Menos Lucrativo",
         history: "Histórico",
         walk_in: "Sem Agendamento",
         add: "+ Novo",
@@ -2271,6 +2359,9 @@ const translations = {
         revenue_month: "इस महीने",
         expected: "अपेक्षित:",
         monthly_goal: "मासिक लक्ष्य",
+        busy_hours: "व्यस्त घंटे",
+        top_service: "शीर्ष सेवा",
+        lowest_service: "सबसे कम लाभदायक",
         history: "इतिहास",
         walk_in: "वॉक-इन",
         add: "+ नया",

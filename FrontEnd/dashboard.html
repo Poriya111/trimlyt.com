@@ -55,6 +55,33 @@
                 </div>
                 <p class="goal-details">$0 / $5,000</p>
             </section>
+
+            <!-- Analytics: Busy Hours -->
+            <section class="card">
+                <h3 data-i18n="busy_hours">Busy Hours</h3>
+                <div class="chart-wrapper">
+                    <div id="busyHoursYAxis" class="chart-y-axis"></div>
+                    <div id="busyHoursChart" class="chart-container"></div>
+                </div>
+            </section>
+
+            <!-- Analytics: Service Performance -->
+            <section class="metrics-grid">
+                <div class="card metric-card">
+                    <h3 data-i18n="top_service">Top Service</h3>
+                    <p class="value" id="topServiceValue" style="font-size: 1.2rem;">-</p>
+                    <p class="expected-value" id="topServiceRevenue">-</p>
+                </div>
+                <div class="card metric-card">
+                    <h3 data-i18n="lowest_service">Least Profitable</h3>
+                    <p class="value" id="lowServiceValue" style="font-size: 1.2rem;">-</p>
+                    <p class="expected-value" id="lowServiceRevenue">-</p>
+                </div>
+            </section>
+
+            <footer class="app-footer">
+                <p><span class="logo-t">T</span>rimlyt &copy; 2026 <strong>Version 1.0</strong></p>
+            </footer>
         </main>
 
         <!-- Add Appointment Modal -->
