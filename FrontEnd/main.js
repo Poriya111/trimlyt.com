@@ -1,5 +1,4 @@
 let currentAppointments = [];
-
 document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
     const page = path.split('/').pop() || 'index.html';
@@ -370,6 +369,13 @@ function initAppointmentsPage() {
     const closeAddBtn = document.getElementById('closeAddModal');
     const addBtn = document.getElementById('addAppointmentBtn');
     const walkInBtn = document.getElementById('walkInBtn');
+    
+    // New Modals & Buttons
+    const addChoiceModal = document.getElementById('addChoiceModal');
+    const calendarModal = document.getElementById('calendarModal');
+    const btnManualAdd = document.getElementById('btnManualAdd');
+    const btnCalendarIntegrate = document.getElementById('btnCalendarIntegrate');
+    
     const addForm = document.getElementById('addAppointmentForm');
     const list = document.getElementById('appointmentList');
     const dateInput = document.getElementById('dateInput');
@@ -592,7 +598,47 @@ function initAppointmentsPage() {
 
     // --- Add Appointment Logic ---
     if (addBtn) {
+        // Open Choice Modal instead of direct Add Modal
         addBtn.addEventListener('click', () => {
+            if (addChoiceModal) addChoiceModal.classList.remove('hidden');
+        });
+    }
+
+    // Choice Modal Logic
+    if (addChoiceModal) {
+        const closeChoiceBtn = document.getElementById('closeChoiceModal');
+        if (closeChoiceBtn) {
+            closeChoiceBtn.addEventListener('click', () => addChoiceModal.classList.add('hidden'));
+        }
+
+        if (btnCalendarIntegrate) {
+            btnCalendarIntegrate.addEventListener('click', () => {
+                addChoiceModal.classList.add('hidden');
+                if (calendarModal) calendarModal.classList.remove('hidden');
+            });
+        }
+    }
+
+    // Calendar Modal Logic
+    if (calendarModal) {
+        const backToChoiceBtn = document.getElementById('backToChoiceBtn');
+        if (backToChoiceBtn) {
+            backToChoiceBtn.addEventListener('click', () => {
+                calendarModal.classList.add('hidden');
+                if (addChoiceModal) addChoiceModal.classList.remove('hidden');
+            });
+        }
+
+        const calendarBtns = calendarModal.querySelectorAll('.calendar-btn');
+        calendarBtns.forEach(btn => {
+            btn.addEventListener('click', () => showNotification(t('coming_soon'), 'info'));
+        });
+    }
+
+    // Manual Add Logic (Moved from addBtn)
+    if (btnManualAdd) {
+        btnManualAdd.addEventListener('click', () => {
+            if (addChoiceModal) addChoiceModal.classList.add('hidden');
             addForm.reset();
             addForm.dataset.mode = 'add';
             delete addForm.dataset.editId;
@@ -672,16 +718,62 @@ function initDashboardPage() {
     const closeAddBtn = document.getElementById('closeAddModal');
     const addForm = document.getElementById('addAppointmentForm');
     const dateInput = document.getElementById('dateInput');
+    
+    // New Modals & Buttons
+    const addChoiceModal = document.getElementById('addChoiceModal');
+    const calendarModal = document.getElementById('calendarModal');
+    const btnManualAdd = document.getElementById('btnManualAdd');
+    const btnCalendarIntegrate = document.getElementById('btnCalendarIntegrate');
 
     if (quickAddBtn) {
+        // Open Choice Modal instead of direct Add Modal
         quickAddBtn.addEventListener('click', () => {
+            if (addChoiceModal) addChoiceModal.classList.remove('hidden');
+        });
+    }
+
+    // Choice Modal Logic
+    if (addChoiceModal) {
+        const closeChoiceBtn = document.getElementById('closeChoiceModal');
+        if (closeChoiceBtn) {
+            closeChoiceBtn.addEventListener('click', () => addChoiceModal.classList.add('hidden'));
+        }
+
+        if (btnCalendarIntegrate) {
+            btnCalendarIntegrate.addEventListener('click', () => {
+                addChoiceModal.classList.add('hidden');
+                if (calendarModal) calendarModal.classList.remove('hidden');
+            });
+        }
+    }
+
+    // Calendar Modal Logic
+    if (calendarModal) {
+        const backToChoiceBtn = document.getElementById('backToChoiceBtn');
+        if (backToChoiceBtn) {
+            backToChoiceBtn.addEventListener('click', () => {
+                calendarModal.classList.add('hidden');
+                if (addChoiceModal) addChoiceModal.classList.remove('hidden');
+            });
+        }
+
+        const calendarBtns = calendarModal.querySelectorAll('.calendar-btn');
+        calendarBtns.forEach(btn => {
+            btn.addEventListener('click', () => showNotification(t('coming_soon'), 'info'));
+        });
+    }
+
+    // Manual Add Logic (Moved from quickAddBtn)
+    if (btnManualAdd) {
+        btnManualAdd.addEventListener('click', () => {
+            if (addChoiceModal) addChoiceModal.classList.add('hidden');
             const form = document.getElementById('addAppointmentForm');
             form.reset();
             form.dataset.mode = 'add';
             delete form.dataset.editId;
             delete form.dataset.type; // Clear walk-in type
-            addModal.querySelector('h3').textContent = 'New Appointment';
-            form.querySelector('button[type="submit"]').textContent = 'Save';
+            addModal.querySelector('h3').textContent = t('new_appointment'); // Ensure translation
+            form.querySelector('button[type="submit"]').textContent = t('save');
             
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -721,8 +813,11 @@ function initDashboardPage() {
         });
     }
 
+    const token = localStorage.getItem('trimlyt_token');
+    if (token) setupServiceAutocomplete(token);
+
     initProfileLogic();
-    loadAppointments();
+    updateDashboardMetrics();
 }
 
 function initProfileLogic() {
@@ -785,62 +880,6 @@ function initProfileLogic() {
             window.location.href = 'index.html';
         });
     }
-}
-
-function initDashboardPage() {
-    const quickAddBtn = document.getElementById('quickAddBtn');
-    const walkInBtn = document.getElementById('walkInBtn');
-    const addModal = document.getElementById('addModal');
-    const closeAddBtn = document.getElementById('closeAddModal');
-    const addForm = document.getElementById('addAppointmentForm');
-    const dateInput = document.getElementById('dateInput');
-
-    if (quickAddBtn) {
-        quickAddBtn.addEventListener('click', () => {
-            const form = document.getElementById('addAppointmentForm');
-            form.reset();
-            form.dataset.mode = 'add';
-            delete form.dataset.editId;
-            addModal.querySelector('h3').textContent = t('new_appointment');
-            form.querySelector('button[type="submit"]').textContent = t('save');
-            
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            document.getElementById('dateInput').min = now.toISOString().slice(0, 16);
-
-            addModal.classList.remove('hidden');
-        });
-    }
-
-    if (walkInBtn) {
-        walkInBtn.addEventListener('click', () => {
-            setupWalkInModal(addForm, addModal, dateInput);
-        });
-    }
-
-    if (closeAddBtn) {
-        closeAddBtn.addEventListener('click', () => {
-            addModal.classList.add('hidden');
-        });
-    }
-
-    if (addForm) {
-        addForm.addEventListener('submit', (e) => handleAppointmentSubmit(e, addModal));
-    }
-
-    if (dateInput) {
-        dateInput.addEventListener('click', () => {
-            if ('showPicker' in HTMLInputElement.prototype) {
-                dateInput.showPicker();
-            }
-        });
-    }
-
-    const token = localStorage.getItem('trimlyt_token');
-    if (token) setupServiceAutocomplete(token);
-
-    initProfileLogic();
-    updateDashboardMetrics();
 }
 
 async function handleAppointmentSubmit(e, modal) {
@@ -1745,7 +1784,14 @@ const translations = {
         finished_default: "Finished (Default)",
         didnt_show_up: "Didn't Show Up",
         no_gap: "No Gap",
-        hour_default: "1 Hour (Default)"
+        hour_default: "1 Hour (Default)",
+        add_manually: "Add Manually",
+        integrate_calendar: "Integrate from Calendar",
+        choose_calendar: "Choose Calendar",
+        back: "Back",
+        coming_soon: "Coming Soon",
+        google_calendar: "Google Calendar",
+        apple_calendar: "Apple Calendar"
     },
     de: {
         app_name: "Trimlyt",
@@ -1844,7 +1890,14 @@ const translations = {
         finished_default: "Beendet (Standard)",
         didnt_show_up: "Nicht erschienen",
         no_gap: "Kein Abstand",
-        hour_default: "1 Stunde (Standard)"
+        hour_default: "1 Stunde (Standard)",
+        add_manually: "Manuell hinzufügen",
+        integrate_calendar: "Kalender integrieren",
+        choose_calendar: "Kalender wählen",
+        back: "Zurück",
+        coming_soon: "Demnächst",
+        google_calendar: "Google Kalender",
+        apple_calendar: "Apple Kalender"
     },
     nl: {
         app_name: "Trimlyt",
@@ -1943,7 +1996,14 @@ const translations = {
         finished_default: "Voltooid (Standaard)",
         didnt_show_up: "Niet komen opdagen",
         no_gap: "Geen Tussenruimte",
-        hour_default: "1 Uur (Standaard)"
+        hour_default: "1 Uur (Standaard)",
+        add_manually: "Handmatig toevoegen",
+        integrate_calendar: "Kalender integreren",
+        choose_calendar: "Kies Kalender",
+        back: "Terug",
+        coming_soon: "Binnenkort",
+        google_calendar: "Google Agenda",
+        apple_calendar: "Apple Agenda"
     },
     es: {
         app_name: "Trimlyt",
@@ -2042,7 +2102,14 @@ const translations = {
         finished_default: "Finalizado (Por defecto)",
         didnt_show_up: "No se presentó",
         no_gap: "Sin Espacio",
-        hour_default: "1 Hora (Por defecto)"
+        hour_default: "1 Hora (Por defecto)",
+        add_manually: "Añadir Manualmente",
+        integrate_calendar: "Integrar Calendario",
+        choose_calendar: "Elegir Calendario",
+        back: "Volver",
+        coming_soon: "Próximamente",
+        google_calendar: "Google Calendar",
+        apple_calendar: "Apple Calendar"
     },
     fr: {
         app_name: "Trimlyt",
@@ -2141,7 +2208,14 @@ const translations = {
         finished_default: "Terminé (Défaut)",
         didnt_show_up: "Non présenté",
         no_gap: "Pas d'écart",
-        hour_default: "1 Heure (Défaut)"
+        hour_default: "1 Heure (Défaut)",
+        add_manually: "Ajouter Manuellement",
+        integrate_calendar: "Intégrer Calendrier",
+        choose_calendar: "Choisir Calendrier",
+        back: "Retour",
+        coming_soon: "Bientôt",
+        google_calendar: "Google Agenda",
+        apple_calendar: "Apple Calendrier"
     },
     fa: {
         app_name: "تریم‌لیت",
@@ -2240,7 +2314,14 @@ const translations = {
         finished_default: "انجام شده (پیش‌فرض)",
         didnt_show_up: "نیامد",
         no_gap: "بدون فاصله",
-        hour_default: "۱ ساعت (پیش‌فرض)"
+        hour_default: "۱ ساعت (پیش‌فرض)",
+        add_manually: "افزودن دستی",
+        integrate_calendar: "ادغام تقویم",
+        choose_calendar: "انتخاب تقویم",
+        back: "بازگشت",
+        coming_soon: "به زودی",
+        google_calendar: "تقویم گوگل",
+        apple_calendar: "تقویم اپل"
     },
     pt: {
         app_name: "Trimlyt",
@@ -2339,7 +2420,14 @@ const translations = {
         finished_default: "Concluído (Padrão)",
         didnt_show_up: "Não apareceu",
         no_gap: "Sem Intervalo",
-        hour_default: "1 Hora (Padrão)"
+        hour_default: "1 Hora (Padrão)",
+        add_manually: "Adicionar Manualmente",
+        integrate_calendar: "Integrar Calendário",
+        choose_calendar: "Escolher Calendário",
+        back: "Voltar",
+        coming_soon: "Em Breve",
+        google_calendar: "Google Calendar",
+        apple_calendar: "Apple Calendar"
     },
     hi: {
         app_name: "Trimlyt",
@@ -2438,7 +2526,14 @@ const translations = {
         finished_default: "समाप्त (डिफ़ॉल्ट)",
         didnt_show_up: "नहीं आया",
         no_gap: "कोई अंतराल नहीं",
-        hour_default: "1 घंटा (डिफ़ॉल्ट)"
+        hour_default: "1 घंटा (डिफ़ॉल्ट)",
+        add_manually: "मैन्युअल रूप से जोड़ें",
+        integrate_calendar: "कैलेंडर से जोड़ें",
+        choose_calendar: "कैलेंडर चुनें",
+        back: "वापस",
+        coming_soon: "जल्द आ रहा है",
+        google_calendar: "गूगल कैलेंडर",
+        apple_calendar: "एप्पल कैलेंडर"
     }
 };
 

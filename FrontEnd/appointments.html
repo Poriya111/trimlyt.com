@@ -37,6 +37,26 @@
             </footer>
         </main>
 
+        <!-- Add Choice Modal -->
+        <div id="addChoiceModal" class="modal hidden">
+            <div class="modal-content">
+                <h3 data-i18n="new_appointment">New Appointment</h3>
+                <button id="btnManualAdd" class="btn-option" data-i18n="add_manually">Add Manually</button>
+                <button id="btnCalendarIntegrate" class="btn-option" data-i18n="integrate_calendar">Integrate from Calendar</button>
+                <button id="closeChoiceModal" class="btn btn-text" data-i18n="cancel">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Calendar Integration Modal -->
+        <div id="calendarModal" class="modal hidden">
+            <div class="modal-content">
+                <h3 data-i18n="choose_calendar">Choose Calendar</h3>
+                <button class="btn-option calendar-btn" data-i18n="google_calendar">Google Calendar</button>
+                <button class="btn-option calendar-btn" data-i18n="apple_calendar">Apple Calendar</button>
+                <button id="backToChoiceBtn" class="btn btn-text" data-i18n="back">Back</button>
+            </div>
+        </div>
+
         <!-- Add Appointment Modal -->
         <div id="addModal" class="modal hidden">
             <div class="modal-content">
