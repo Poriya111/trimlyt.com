@@ -37,6 +37,14 @@
             </footer>
         </main>
 
+        <!-- Onboarding / Tasks Modal -->
+        <div id="onboardingModal" class="modal hidden">
+            <div class="modal-content">
+                <button id="closeOnboardingBtn" style="position: absolute; top: 12px; right: 12px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">✕</button>
+                <div id="onboardingContent"></div>
+            </div>
+        </div>
+
         <!-- Add Choice Modal -->
         <div id="addChoiceModal" class="modal hidden">
             <div class="modal-content">
@@ -76,8 +84,12 @@
                         <input type="datetime-local" id="dateInput" required>
                     </div>
                     <div class="input-group">
+                        <label for="clientEmailInput" data-i18n="client_email"></label>
+                        <input type="email" id="clientEmailInput" data-i18n="client_email_placeholder">
+                    </div>
+                    <div class="input-group">
                         <label data-i18n="extras">Extras (Optional)</label>
-                        <input type="text" id="extrasInput" placeholder="Client Name, Other Specifications and etc.." data-i18n="extras">
+                        <input type="text" id="extrasInput" placeholder="Client Name, Notes, etc." data-i18n="extras_placeholder">
                     </div>
                     <button type="submit" class="btn btn-primary" data-i18n="save">Save</button>
                     <button type="button" id="closeAddModal" class="btn btn-text" data-i18n="cancel">Cancel</button>
@@ -102,16 +114,35 @@
         <!-- Info Modal -->
         <div id="infoModal" class="modal hidden">
             <div class="modal-content">
-                <h3 data-i18n="appointments_guide">Appointments Guide</h3>
-                <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 24px;" data-i18n="appointments_guide_text">
-                    Manage your schedule and history.
-                    <br><br>
-                    • <strong>Time Gap:</strong> To prevent overbooking, the system enforces a minimum gap between appointments (Default: 1 hour). Change this in Settings.<br>
-                    • <strong>Search:</strong> Filter by client name, service, or extras.<br>
-                    • <strong>Actions:</strong> Tap any appointment to Edit, Cancel, or mark as Finished.<br>
-                    • <strong>History:</strong> Scroll down to load past appointments.
-                </p>
-                <button id="closeInfoModal" class="btn btn-primary" data-i18n="got_it">Got it</button>
+                    <h3>Appointments Guide</h3>
+                    <p style="color: var(--text-muted); line-height: 1.6;">Manage your schedule and history from here. This modal explains the list, actions, and how integration behaves so there are no surprises.</p>
+
+                    <h4 style="margin-top:12px;">List & Search</h4>
+                    <p style="color: var(--text-muted);">Use the search box to filter by service name, extras, or client email. Upcoming appointments are shown first; past appointments appear under "Past".</p>
+
+                    <h4 style="margin-top:12px;">Actions</h4>
+                    <ul style="color: var(--text-muted); line-height: 1.6;">
+                        <li><strong>Edit:</strong> Change time, service, or details. Edits sync to Google Calendar if connected.</li>
+                        <li><strong>Finish:</strong> Marks the appointment as completed and counts toward revenue.</li>
+                        <li><strong>No Show / Cancel:</strong> Updates status; canceled/no-show appointments will be removed from Google Calendar when applicable.</li>
+                        <li><strong>Delete:</strong> Removes appointment from Trimlyt and Google Calendar (if previously synced).</li>
+                    </ul>
+
+                    <h4 style="margin-top:12px;">Adding Appointments</h4>
+                    <p style="color: var(--text-muted);">Use <strong>+ Add</strong> to create appointments directly in Trimlyt for best accuracy. For quick in-person jobs use <strong>Walk-in</strong>, which creates a finished appointment immediately.</p>
+
+                    <h4 style="margin-top:12px;">Google Calendar Integration</h4>
+                    <p style="color: var(--text-muted); line-height: 1.6;">When you choose to import from Google Calendar, Trimlyt only imports events you explicitly mark with the <strong>TL [Service] [Price]</strong> format in the event title (example: <em>TL Haircut 25</em>). This prevents accidental imports of personal events.</p>
+
+                    <div style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 8px; margin: 8px 0; color: var(--text-muted);">
+                        <strong>Note:</strong> Trimlyt does not access or send your emails. Import and sync are limited to calendar events and basic identity information.
+                    </div>
+
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 12px;">Privacy & terms: <a href="privacyPolicy.html" style="color: var(--primary-color);">Privacy Policy</a> • <a href="termsOfService.html" style="color: var(--primary-color);">Terms of Service</a></p>
+                    <button id="closeInfoModal" class="btn btn-primary">Got it</button>
+                    <button class="scroll-to-bottom" title="Scroll to end" aria-label="Scroll to end">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+                    </button>
             </div>
         </div>
 

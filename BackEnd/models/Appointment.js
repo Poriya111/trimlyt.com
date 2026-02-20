@@ -6,6 +6,9 @@ const AppointmentSchema = new mongoose.Schema({
     price: { type: Number, required: true },
     date: { type: Date, required: true },
     extras: { type: String },
+    clientEmail: { type: String },
+    googleEventId: { type: String },
+    
     status: { 
         type: String, 
         enum: ['Scheduled', 'Finished', 'Canceled', 'No Show'], 

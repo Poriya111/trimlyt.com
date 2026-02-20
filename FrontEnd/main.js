@@ -70,7 +70,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Scroll-to-bottom button inside modals
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.scroll-to-bottom');
+        if (!btn) return;
+
+        const modalContent = btn.closest('.modal-content');
+        if (!modalContent) return;
+
+        // Smooth scroll to bottom of modal content
+        modalContent.scrollTo({ top: modalContent.scrollHeight, behavior: 'smooth' });
+    });
+
     updateProfileDisplay();
+    
+    // Initialize Onboarding Modal for Dashboard, Appointments, Settings
+    const onboardingPages = ['dashboard.html', 'appointments.html', 'settings.html'];
+    if (onboardingPages.includes(page) && token) {
+        initOnboarding(token);
+    }
+    
     applyTranslations();
 });
 
@@ -177,6 +196,7 @@ function initSettingsPage() {
     const languageInput = document.getElementById('language');
     const saveLanguageBtn = document.getElementById('saveLanguageBtn');
     const manageServicesBtn = document.getElementById('manageServicesBtn');
+    const connectGoogleBtn = document.getElementById('connectGoogleBtn');
 
     // Load saved settings
     const savedGoal = localStorage.getItem('trimlyt_goal');
@@ -278,6 +298,63 @@ function initSettingsPage() {
         manageServicesBtn.addEventListener('click', () => {
             initServicesModal();
         });
+    }
+
+    // --- Google Integration Logic ---
+    if (connectGoogleBtn) {
+        const token = localStorage.getItem('trimlyt_token');
+        const statusEl = document.getElementById('googleStatus');
+
+        // Check Status
+        const checkStatus = async () => {
+            try {
+                const res = await fetch('/api/auth/google/status', { headers: { 'x-auth-token': token } });
+                const data = await res.json();
+                
+                if (data.connected) {
+                    statusEl.textContent = data.email;
+                    statusEl.style.color = 'var(--success-color)';
+                    connectGoogleBtn.innerHTML = `<span data-i18n="disconnect">Disconnect</span>`;
+                    connectGoogleBtn.classList.add('btn-connected');
+                    connectGoogleBtn.onclick = disconnectGoogle;
+                } else {
+                    statusEl.textContent = t('not_connected');
+                    statusEl.style.color = 'var(--text-muted)';
+                    connectGoogleBtn.innerHTML = `<span style="font-size: 1.2em;">G</span> <span data-i18n="connect_google">Connect Google Account</span>`;
+                    connectGoogleBtn.classList.remove('btn-connected');
+                    connectGoogleBtn.onclick = connectGoogle;
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        const connectGoogle = async () => {
+            try {
+                const res = await fetch('/api/auth/google/url', { headers: { 'x-auth-token': token } });
+                const data = await res.json();
+                if (data.url) window.location.href = data.url;
+            } catch (err) {
+                showNotification('Error initiating connection', 'error');
+            }
+        };
+
+        const disconnectGoogle = async () => {
+            if (await showConfirm(t('confirm_disconnect'), t('disconnect'), true)) {
+                await fetch('/api/auth/google', { method: 'DELETE', headers: { 'x-auth-token': token } });
+                checkStatus();
+                showNotification(t('disconnected'), 'success');
+            }
+        };
+
+        // Handle Callback Params
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('google_auth') === 'success') {
+            showNotification(t('google_connected'), 'success');
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        checkStatus();
     }
 
     setupCustomSelects();
@@ -557,6 +634,7 @@ function initAppointmentsPage() {
         btnEdit.addEventListener('click', () => {
             const appointment = currentAppointments.find(a => a._id === selectedAppointmentId);
             if (appointment) {
+                    document.getElementById('clientEmailInput').value = appointment.clientEmail || '';
                 document.getElementById('serviceInput').value = appointment.service;
                 document.getElementById('priceInput').value = appointment.price;
                 
@@ -631,7 +709,15 @@ function initAppointmentsPage() {
 
         const calendarBtns = calendarModal.querySelectorAll('.calendar-btn');
         calendarBtns.forEach(btn => {
-            btn.addEventListener('click', () => showNotification(t('coming_soon'), 'info'));
+            btn.addEventListener('click', async () => {
+                const text = btn.textContent || "";
+                if (text.toLowerCase().includes('google')) {
+                    calendarModal.classList.add('hidden');
+                    await syncGoogleCalendar();
+                } else {
+                    showNotification(t('coming_soon'), 'info');
+                }
+            });
         });
     }
 
@@ -759,7 +845,15 @@ function initDashboardPage() {
 
         const calendarBtns = calendarModal.querySelectorAll('.calendar-btn');
         calendarBtns.forEach(btn => {
-            btn.addEventListener('click', () => showNotification(t('coming_soon'), 'info'));
+            btn.addEventListener('click', async () => {
+                const text = btn.textContent || "";
+                if (text.toLowerCase().includes('google')) {
+                    calendarModal.classList.add('hidden');
+                    await syncGoogleCalendar();
+                } else {
+                    showNotification(t('coming_soon'), 'info');
+                }
+            });
         });
     }
 
@@ -890,6 +984,7 @@ async function handleAppointmentSubmit(e, modal) {
     const price = document.getElementById('priceInput').value;
     const date = document.getElementById('dateInput').value;
     const extras = document.getElementById('extrasInput').value;
+    const clientEmail = document.getElementById('clientEmailInput').value;
     const token = localStorage.getItem('trimlyt_token');
     const submitBtn = form.querySelector('button[type="submit"]');
 
@@ -905,7 +1000,7 @@ async function handleAppointmentSubmit(e, modal) {
         const url = mode === 'edit' ? `/api/appointments/${editId}` : '/api/appointments';
         const method = mode === 'edit' ? 'PUT' : 'POST';
 
-        let payload = { service, price, date, extras };
+        let payload = { service, price, date, extras, clientEmail };
 
         if (isWalkIn) {
             payload.status = 'Finished';
@@ -940,6 +1035,22 @@ async function handleAppointmentSubmit(e, modal) {
 
         const successMsg = mode === 'edit' ? t('appointment_updated') : t('appointment_created');
         showNotification(successMsg, 'success');
+
+        // Show Google Calendar sync info if user has connected Google
+        const userRes = await fetch('/api/auth/user', { headers: { 'x-auth-token': token } });
+        if (userRes.ok) {
+            const userData = await userRes.json();
+            if (userData.googleEmail) {
+                setTimeout(() => {
+                    showNotification(`📅 Synced to Google Calendar (${userData.googleEmail})`, 'info');
+                }, 500);
+            }
+        }
+
+        if (mode !== 'edit' && !payload.clientEmail && !isWalkIn) {
+            showNotification(t('no_email_warning'), 'warning');
+        }
+
         if (modal) modal.classList.add('hidden');
         form.reset();
         
@@ -1070,11 +1181,17 @@ function renderAppointments(appointments) {
             extrasHtml = `<p style="font-size: 0.85rem; opacity: 0.8; margin-top: 2px; font-style: italic;">+ ${app.extras}</p>`;
         }
 
+        let emailHtml = '';
+        if (app.clientEmail) {
+            emailHtml = `<p style="font-size: 0.8rem; color: var(--primary-color); margin-top: 4px; opacity: 0.9;">${app.clientEmail}</p>`;
+        }
+
         return `
         <div class="appointment-item" style="${statusStyle}">
             <div class="appointment-info">
                 <h4>${app.service}${statusText}</h4>
                 <p>${new Date(app.date).toLocaleString()}</p>
+                ${emailHtml}
                 ${extrasHtml}
             </div>
             <div class="appointment-right">
@@ -1115,7 +1232,6 @@ function renderAppointments(appointments) {
 
     listContainer.innerHTML = html;
 }
-
 async function updateDashboardMetrics() {
     const token = localStorage.getItem('trimlyt_token');
 
@@ -1163,10 +1279,11 @@ async function updateDashboardMetrics() {
         let realToday = 0, expectedToday = 0;
         let realWeek = 0, expectedWeek = 0;
         let realMonth = 0, expectedMonth = 0;
+        let noShowCount = 0, noShowLost = 0;
 
         appointments.forEach(app => {
             const appDate = new Date(app.date);
-            const price = app.price || 0;
+            const price = parseFloat(app.price) || 0;
             const isReal = app.status === 'Finished';
             const isExpected = app.status === 'Finished' || app.status === 'Scheduled' || !app.status;
 
@@ -1181,6 +1298,11 @@ async function updateDashboardMetrics() {
             if (appDate.getMonth() === currentMonth && appDate.getFullYear() === currentYear) {
                 if (isReal) realMonth += price;
                 if (isExpected) expectedMonth += price;
+
+                if (app.status === 'No Show') {
+                    noShowCount++;
+                    noShowLost += price;
+                }
             }
         });
 
@@ -1208,6 +1330,12 @@ async function updateDashboardMetrics() {
         if (goalText) goalText.textContent = `${currency}${realMonth} / ${currency}${goal}`;
         if (goalPercentText) goalPercentText.textContent = `${goalPercent}%`;
 
+        // Update No Show Metrics
+        const noShowValueEl = document.getElementById('noShowValue');
+        const noShowLostEl = document.getElementById('noShowLost');
+        if (noShowValueEl) noShowValueEl.textContent = noShowCount;
+        if (noShowLostEl) noShowLostEl.textContent = `${t('lost')} ${currency}${noShowLost}`;
+
         // --- Analytics Logic ---
         const hours = new Array(24).fill(0);
         const serviceRevenue = {};
@@ -1218,7 +1346,8 @@ async function updateDashboardMetrics() {
             // Busy Hours (Scheduled + Finished)
             if (status === 'Scheduled' || status === 'Finished') {
                 const d = new Date(app.date);
-                hours[d.getHours()]++;
+                const hour = d.getHours(); // Uses browser's local time automatically
+                if (hour >= 0 && hour < 24) hours[hour]++;
             }
 
             // Service Revenue (Finished only)
@@ -1233,21 +1362,19 @@ async function updateDashboardMetrics() {
         // Render Busy Hours Chart
         const chartContainer = document.getElementById('busyHoursChart');
         const yAxisContainer = document.getElementById('busyHoursYAxis');
-        if (chartContainer && yAxisContainer) {
-            const maxVal = Math.max(...hours, 1);
+        
+        if (yAxisContainer) {
+            yAxisContainer.style.display = 'none';
+        }
 
-            // Render Y-Axis
-            yAxisContainer.innerHTML = `
-                <span>${maxVal}</span>
-                <span>${Math.ceil(maxVal / 2)}</span>
-                <span>0</span>
-            `;
+        if (chartContainer) {
+            const maxVal = Math.max(...hours, 1);
 
             chartContainer.innerHTML = hours.map((count, i) => {
                 const h = (count / maxVal) * 100;
-                // Show label for every 6 hours: 0, 6, 12, 18
-                const label = (i % 6 === 0) ? `<span class="chart-bar-label">${i}:00</span>` : '';
-                return `<div class="chart-bar" style="height: ${h}%;" title="${i}:00 - ${count} bookings">${label}</div>`;
+                // Show label for every 4 hours: 0, 4, 8, 12, 16, 20
+                const label = (i % 4 === 0) ? `<span class="chart-bar-label">${i}</span>` : '';
+                return `<div class="chart-bar" style="height: ${h}%;"><div class="chart-bar-value">${count}</div>${label}</div>`;
             }).join('');
         }
 
@@ -1680,6 +1807,165 @@ async function setupServiceAutocomplete(token) {
     });
 }
 
+async function syncGoogleCalendar() {
+    const token = localStorage.getItem('trimlyt_token');
+    showNotification('Syncing with Google Calendar...\n\nMake sure events are titled: TL Service Price\n(Example: "TL Haircut 25")', 'info');
+    
+    try {
+        const res = await fetch('/api/appointments/sync-google', {
+            method: 'POST',
+            headers: { 'x-auth-token': token }
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+            showNotification(data.msg + '\n\nOnly events matching "TL Service Price" pattern are imported.', 'success');
+            // Refresh data based on current page
+            const path = window.location.pathname;
+            if (path.includes('dashboard')) {
+                updateDashboardMetrics();
+            } else if (path.includes('appointments')) {
+                loadAppointments(true);
+            }
+        } else {
+            if (data.msg === 'Google account not connected') {
+                showNotification(t('not_connected'), 'error');
+            } else {
+                throw new Error(data.msg || 'Sync failed');
+            }
+        }
+    } catch (err) {
+        console.error(err);
+        const message = (err && err.message) || (err && err.msg) || 'Error syncing calendar';
+        // If backend provided a helpful message (e.g. "Google token invalid"), show it directly.
+        if (message && message !== 'Server Error during sync') {
+            showNotification(message, 'error');
+        } else {
+            showNotification('Error syncing calendar: ' + message, 'error');
+        }
+    }
+}
+
+// --- Onboarding System ---
+async function initOnboarding(token) {
+    const modal = document.getElementById('onboardingModal');
+    const content = document.getElementById('onboardingContent');
+    const closeBtn = document.getElementById('closeOnboardingBtn');
+    
+    if (!modal || !content) return;
+
+    // Check if Google is connected
+    let isGoogleConnected = false;
+    try {
+        const res = await fetch('/api/auth/google/status', { headers: { 'x-auth-token': token } });
+        const data = await res.json();
+        isGoogleConnected = data.connected;
+    } catch (err) {
+        console.error('Error checking Google status:', err);
+    }
+
+    // Determine which task to show
+    const googleTask1Dismissed = localStorage.getItem('trimlyt_onboarding_google_task1_dismissed');
+    const googleTask2Dismissed = localStorage.getItem('trimlyt_onboarding_google_task2_dismissed');
+
+    let taskToShow = null;
+    if (!isGoogleConnected && !googleTask1Dismissed) {
+        taskToShow = 'google_task1';
+    } else if (isGoogleConnected && !googleTask2Dismissed) {
+        taskToShow = 'google_task2';
+    }
+
+    // If no tasks to show, hide modal
+    if (!taskToShow) {
+        modal.classList.add('hidden');
+        return;
+    }
+
+    // Render task content
+    if (taskToShow === 'google_task1') {
+        content.innerHTML = `
+            <h3 style="margin-bottom: 16px; color: var(--text-primary);">📱 Connect Your Google Account</h3>
+            <p style="color: var(--text-muted); margin-bottom: 12px; line-height: 1.6;">
+                Connect your Google Account to unlock these features:
+            </p>
+            <ul style="margin: 12px 0 16px 16px; color: var(--text-muted); line-height: 1.8;">
+                <li><strong>Sync Google Calendar</strong> — Import existing appointments to Trimlyt</li>
+                <li><strong>Zero Email Access</strong> — Trimlyt does <u>not</u> access your email or send on your behalf</li>
+                <li><strong>Minimal Permissions</strong> — Only calendar and basic identity</li>
+                <li><strong>Your Data is Safe</strong> — End-to-end encrypted, no data sharing</li>
+            </ul>
+            <div style="background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 0.9rem; color: var(--text-muted);">
+                <p style="margin: 0 0 8px 0;"><strong>Privacy & Terms:</strong></p>
+                <p style="margin: 4px 0;"><a href="privacyPolicy.html" style="color: var(--primary-color); text-decoration: none;">Privacy Policy</a> • <a href="termsOfService.html" style="color: var(--primary-color); text-decoration: none;">Terms of Service</a></p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button id="connectGoogleTaskBtn" class="btn btn-primary" style="flex: 1;">Connect Google Account</button>
+                <button id="skipGoogleTask1Btn" class="btn btn-text" style="flex: 1;">Maybe later</button>
+            </div>
+        `;
+
+        document.getElementById('connectGoogleTaskBtn').addEventListener('click', () => {
+            // Trigger the Google connect flow in settings
+            window.location.href = 'settings.html';
+        });
+
+        document.getElementById('skipGoogleTask1Btn').addEventListener('click', () => {
+            localStorage.setItem('trimlyt_onboarding_google_task1_dismissed', 'true');
+            modal.classList.add('hidden');
+        });
+
+    } else if (taskToShow === 'google_task2') {
+        content.innerHTML = `
+            <h3 style="margin-bottom: 16px; color: var(--text-primary);">📅 How Google Calendar Integration Works</h3>
+            <p style="color: var(--text-muted); margin-bottom: 12px; line-height: 1.6;">
+                Trimlyt uses a simple format to identify which events to import from your Google Calendar.
+            </p>
+            <div style="background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                <p style="margin: 0 0 8px 0; color: var(--text-muted);"><strong>Event Title Format:</strong></p>
+                <code style="display: block; background: rgba(0,0,0,0.1); padding: 8px; border-radius: 4px; font-family: monospace; margin-bottom: 8px; color: var(--primary-color);">TL [Service] [Price]</code>
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Example: <strong>"TL Haircut 25"</strong> or <strong>"TL Beard Trim 15"</strong></p>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 12px; line-height: 1.6;">
+                <strong>Why this approach?</strong> Only events you specifically mark with the "TL" keyword are imported. This ensures:
+            </p>
+            <ul style="margin: 12px 0 16px 16px; color: var(--text-muted); line-height: 1.8;">
+                <li>You have full control over what gets imported</li>
+                <li>Personal events stay private</li>
+                <li>No accidental pollution of your appointment history</li>
+            </ul>
+            <div style="background: rgba(255, 193, 7, 0.1); border-left: 3px solid rgba(255, 193, 7, 0.8); padding: 12px; margin-bottom: 16px; border-radius: 4px;">
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.95rem;">
+                    <strong>💡 Best Practice:</strong> We recommend creating appointments directly in <strong>Trimlyt</strong> for better control and mobile experience. Use Google Calendar import for <strong>bulk-importing existing events only</strong>.
+                </p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button id="understandTask2Btn" class="btn btn-primary" style="flex: 1;">Got It!</button>
+                <button id="skipGoogleTask2Btn" class="btn btn-text" style="flex: 1;">Maybe later</button>
+            </div>
+        `;
+
+        document.getElementById('understandTask2Btn').addEventListener('click', () => {
+            localStorage.setItem('trimlyt_onboarding_google_task2_dismissed', 'true');
+            modal.classList.add('hidden');
+        });
+
+        document.getElementById('skipGoogleTask2Btn').addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+    }
+
+    // Close button
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+    }
+
+    // Show modal
+    modal.classList.remove('hidden');
+}
+
 // --- Translation System ---
 const translations = {
     en: {
@@ -1735,6 +2021,9 @@ const translations = {
         price: "Price",
         date_time: "Date & Time",
         extras: "Extras (Optional)",
+        extras_placeholder: "Client Name, Notes, etc.",
+        client_email: "Client Email (Optional) <strong style='display: block; font-weight: normal; font-size: 0.8rem; opacity: 0.8; margin-top: 4px;'>Optional, used for client contact only.</strong>",
+        client_email_placeholder: "Optional",
         new_appointment: "New Appointment",
         edit_appointment: "Edit Appointment",
         options: "Options",
@@ -1761,6 +2050,7 @@ const translations = {
         appointment_updated: "Appointment updated!",
         appointment_created: "Appointment created!",
         no_matching_appointments: "No matching appointments found.",
+        no_email_warning: "No email provided.",
         status_canceled: "Canceled",
         status_noshow: "No Show",
         today: "Today",
@@ -1791,7 +2081,17 @@ const translations = {
         back: "Back",
         coming_soon: "Coming Soon",
         google_calendar: "Google Calendar",
-        apple_calendar: "Apple Calendar"
+        apple_calendar: "Apple Calendar",
+        no_shows_month: "No Shows (Month)",
+        lost: "Lost:",
+        integrations: "Integrations",
+        connect_google: "Connect Google Account",
+        google_integration_desc: "Connect to sync with Google Calendar. Trimlyt only accesses calendar events and basic identity.",
+        not_connected: "Not Connected",
+        disconnect: "Disconnect",
+        google_connected: "Google Account Connected!",
+        confirm_disconnect: "Disconnect Google Account?",
+        disconnected: "Disconnected."
     },
     de: {
         app_name: "Trimlyt",
@@ -1841,6 +2141,9 @@ const translations = {
         price: "Preis",
         date_time: "Datum & Zeit",
         extras: "Extras (Optional)",
+        extras_placeholder: "Kundenname, Notizen, etc.",
+        client_email: "Kunden-E-Mail (Optional) <strong style='display: block; font-weight: normal; font-size: 0.8rem; opacity: 0.8; margin-top: 4px;'>Durch Angabe der E-Mail des Kunden kann Trimlyt Erinnerungen senden, um Nicht-Erscheinen zu reduzieren.</strong>",
+        client_email_placeholder: "Optional, für Erinnerungen",
         new_appointment: "Neuer Termin",
         edit_appointment: "Termin bearbeiten",
         options: "Optionen",
@@ -1867,6 +2170,7 @@ const translations = {
         appointment_updated: "Termin aktualisiert!",
         appointment_created: "Termin erstellt!",
         no_matching_appointments: "Keine passenden Termine gefunden.",
+        no_email_warning: "Keine E-Mail angegeben. Erinnerungen werden nicht gesendet.",
         status_canceled: "Abgesagt",
         status_noshow: "Nicht erschienen",
         today: "Heute",
@@ -1897,7 +2201,17 @@ const translations = {
         back: "Zurück",
         coming_soon: "Demnächst",
         google_calendar: "Google Kalender",
-        apple_calendar: "Apple Kalender"
+        apple_calendar: "Apple Kalender",
+        no_shows_month: "Nicht erschienen (Monat)",
+        lost: "Verlust:",
+        integrations: "Integrationen",
+        connect_google: "Google-Konto verbinden",
+        google_integration_desc: "Verbinden, um automatische E-Mail-Erinnerungen zu senden.",
+        not_connected: "Nicht verbunden",
+        disconnect: "Trennen",
+        google_connected: "Google-Konto verbunden!",
+        confirm_disconnect: "Google-Konto trennen?",
+        disconnected: "Getrennt."
     },
     nl: {
         app_name: "Trimlyt",
@@ -1947,6 +2261,9 @@ const translations = {
         price: "Prijs",
         date_time: "Datum & Tijd",
         extras: "Extra's (Optioneel)",
+        extras_placeholder: "Klantnaam, notities, etc.",
+        client_email: "E-mail Klant (Optioneel) <strong style='display: block; font-weight: normal; font-size: 0.8rem; opacity: 0.8; margin-top: 4px;'>Door het e-mailadres van de klant op te geven, kan Trimlyt herinneringen sturen om no-shows te verminderen.</strong>",
+        client_email_placeholder: "Optioneel, voor herinneringen",
         new_appointment: "Nieuwe Afspraak",
         edit_appointment: "Afspraak bewerken",
         options: "Opties",
@@ -1973,6 +2290,7 @@ const translations = {
         appointment_updated: "Afspraak bijgewerkt!",
         appointment_created: "Afspraak aangemaakt!",
         no_matching_appointments: "Geen overeenkomende afspraken gevonden.",
+        no_email_warning: "Geen e-mail opgegeven. Herinneringen worden niet verzonden.",
         status_canceled: "Geannuleerd",
         status_noshow: "Niet komen opdagen",
         today: "Vandaag",
@@ -2003,7 +2321,17 @@ const translations = {
         back: "Terug",
         coming_soon: "Binnenkort",
         google_calendar: "Google Agenda",
-        apple_calendar: "Apple Agenda"
+        apple_calendar: "Apple Agenda",
+        no_shows_month: "No Shows (Maand)",
+        lost: "Verloren:",
+        integrations: "Integraties",
+        connect_google: "Google Account Verbinden",
+        google_integration_desc: "Verbind om automatische e-mailherinneringen te sturen.",
+        not_connected: "Niet Verbonden",
+        disconnect: "Ontkoppelen",
+        google_connected: "Google Account Verbonden!",
+        confirm_disconnect: "Google Account ontkoppelen?",
+        disconnected: "Ontkoppeld."
     },
     es: {
         app_name: "Trimlyt",
@@ -2053,6 +2381,9 @@ const translations = {
         price: "Precio",
         date_time: "Fecha y Hora",
         extras: "Extras (Opcional)",
+        extras_placeholder: "Nombre del Cliente, Notas, etc.",
+        client_email: "Email del Cliente (Opcional) <strong style='display: block; font-weight: normal; font-size: 0.8rem; opacity: 0.8; margin-top: 4px;'>Al proporcionar el correo electrónico del cliente, Trimlyt puede enviar recordatorios para reducir las ausencias.</strong>",
+        client_email_placeholder: "Opcional, para recordatorios",
         new_appointment: "Nueva Cita",
         edit_appointment: "Editar Cita",
         options: "Opciones",
@@ -2079,6 +2410,7 @@ const translations = {
         appointment_updated: "¡Cita actualizada!",
         appointment_created: "¡Cita creada!",
         no_matching_appointments: "No se encontraron citas coincidentes.",
+        no_email_warning: "No se proporcionó correo electrónico. No se enviarán recordatorios.",
         status_canceled: "Cancelado",
         status_noshow: "No se presentó",
         today: "Hoy",
@@ -2109,7 +2441,17 @@ const translations = {
         back: "Volver",
         coming_soon: "Próximamente",
         google_calendar: "Google Calendar",
-        apple_calendar: "Apple Calendar"
+        apple_calendar: "Apple Calendar",
+        no_shows_month: "No presentados (Mes)",
+        lost: "Perdido:",
+        integrations: "Integraciones",
+        connect_google: "Conectar cuenta de Google",
+        google_integration_desc: "Conecta para enviar recordatorios automáticos por correo.",
+        not_connected: "No conectado",
+        disconnect: "Desconectar",
+        google_connected: "¡Cuenta de Google conectada!",
+        confirm_disconnect: "¿Desconectar cuenta de Google?",
+        disconnected: "Desconectado."
     },
     fr: {
         app_name: "Trimlyt",
@@ -2159,6 +2501,9 @@ const translations = {
         price: "Prix",
         date_time: "Date & Heure",
         extras: "Extras (Optionnel)",
+        extras_placeholder: "Nom du client, notes, etc.",
+        client_email: "E-mail du Client (Optionnel) <strong style='display: block; font-weight: normal; font-size: 0.8rem; opacity: 0.8; margin-top: 4px;'>En fournissant l'e-mail du client, Trimlyt peut envoyer des rappels pour réduire les non-présentations.</strong>",
+        client_email_placeholder: "Optionnel, pour les rappels",
         new_appointment: "Nouveau Rendez-vous",
         edit_appointment: "Modifier Rendez-vous",
         options: "Options",
@@ -2185,6 +2530,7 @@ const translations = {
         appointment_updated: "Rendez-vous mis à jour !",
         appointment_created: "Rendez-vous créé !",
         no_matching_appointments: "Aucun rendez-vous correspondant trouvé.",
+        no_email_warning: "Aucun e-mail fourni. Les rappels ne seront pas envoyés.",
         status_canceled: "Annulé",
         status_noshow: "Non présenté",
         today: "Aujourd'hui",
@@ -2215,7 +2561,17 @@ const translations = {
         back: "Retour",
         coming_soon: "Bientôt",
         google_calendar: "Google Agenda",
-        apple_calendar: "Apple Calendrier"
+        apple_calendar: "Apple Calendrier",
+        no_shows_month: "Non présentés (Mois)",
+        lost: "Perte :",
+        integrations: "Intégrations",
+        connect_google: "Connecter compte Google",
+        google_integration_desc: "Connectez-vous pour envoyer des rappels automatiques.",
+        not_connected: "Non connecté",
+        disconnect: "Déconnecter",
+        google_connected: "Compte Google connecté !",
+        confirm_disconnect: "Déconnecter le compte Google ?",
+        disconnected: "Déconnecté."
     },
     fa: {
         app_name: "تریم‌لیت",
@@ -2265,6 +2621,9 @@ const translations = {
         price: "قیمت",
         date_time: "تاریخ و زمان",
         extras: "توضیحات (اختیاری)",
+        extras_placeholder: "نام مشتری، یادداشت‌ها و غیره",
+        client_email: "ایمیل مشتری (اختیاری) <strong style='display: block; font-weight: normal; font-size: 0.8rem; opacity: 0.8; margin-top: 4px; text-align: right;'>با ارائه ایمیل مشتری، تریم‌لیت می‌تواند برای کاهش عدم حضور، یادآوری ارسال کند.</strong>",
+        client_email_placeholder: "اختیاری، برای یادآوری‌ها",
         new_appointment: "نوبت جدید",
         edit_appointment: "ویرایش نوبت",
         options: "گزینه‌ها",
@@ -2291,6 +2650,7 @@ const translations = {
         appointment_updated: "نوبت به‌روز شد!",
         appointment_created: "نوبت ایجاد شد!",
         no_matching_appointments: "نوبتی پیدا نشد.",
+        no_email_warning: "ایمیلی ارائه نشده است. یادآوری‌ها ارسال نخواهند شد.",
         status_canceled: "لغو شده",
         status_noshow: "نیامد",
         today: "امروز",
@@ -2321,7 +2681,17 @@ const translations = {
         back: "بازگشت",
         coming_soon: "به زودی",
         google_calendar: "تقویم گوگل",
-        apple_calendar: "تقویم اپل"
+        apple_calendar: "تقویم اپل",
+        no_shows_month: "عدم حضور (ماه)",
+        lost: "ضرر:",
+        integrations: "اتصالات",
+        connect_google: "اتصال حساب گوگل",
+        google_integration_desc: "برای ارسال یادآوری‌های خودکار ایمیلی متصل شوید.",
+        not_connected: "متصل نیست",
+        disconnect: "قطع ارتباط",
+        google_connected: "حساب گوگل متصل شد!",
+        confirm_disconnect: "قطع ارتباط حساب گوگل؟",
+        disconnected: "قطع شد."
     },
     pt: {
         app_name: "Trimlyt",
@@ -2371,6 +2741,9 @@ const translations = {
         price: "Preço",
         date_time: "Data e Hora",
         extras: "Extras (Opcional)",
+        extras_placeholder: "Nome do Cliente, Notas, etc.",
+        client_email: "Email do Cliente (Opcional) <strong style='display: block; font-weight: normal; font-size: 0.8rem; opacity: 0.8; margin-top: 4px;'>Ao fornecer o e-mail do cliente, o Trimlyt pode enviar lembretes para reduzir o não comparecimento.</strong>",
+        client_email_placeholder: "Opcional, para lembretes",
         new_appointment: "Novo Agendamento",
         edit_appointment: "Editar Agendamento",
         options: "Opções",
@@ -2397,6 +2770,7 @@ const translations = {
         appointment_updated: "Agendamento atualizado!",
         appointment_created: "Agendamento criado!",
         no_matching_appointments: "Nenhum agendamento correspondente encontrado.",
+        no_email_warning: "Nenhum e-mail fornecido. Lembretes não serão enviados.",
         status_canceled: "Cancelado",
         status_noshow: "Não apareceu",
         today: "Hoje",
@@ -2427,7 +2801,17 @@ const translations = {
         back: "Voltar",
         coming_soon: "Em Breve",
         google_calendar: "Google Calendar",
-        apple_calendar: "Apple Calendar"
+        apple_calendar: "Apple Calendar",
+        no_shows_month: "Não Compareceu (Mês)",
+        lost: "Perdido:",
+        integrations: "Integrações",
+        connect_google: "Conectar Conta Google",
+        google_integration_desc: "Conecte para enviar lembretes automáticos por e-mail.",
+        not_connected: "Não Conectado",
+        disconnect: "Desconectar",
+        google_connected: "Conta Google Conectada!",
+        confirm_disconnect: "Desconectar Conta Google?",
+        disconnected: "Desconectado."
     },
     hi: {
         app_name: "Trimlyt",
@@ -2477,6 +2861,9 @@ const translations = {
         price: "कीमत",
         date_time: "दिनांक और समय",
         extras: "अतिरिक्त (वैकल्पिक)",
+        extras_placeholder: "ग्राहक का नाम, नोट्स, आदि।",
+        client_email: "ग्राहक का ईमेल (वैकल्पिक) <strong style='display: block; font-weight: normal; font-size: 0.8rem; opacity: 0.8; margin-top: 4px;'>ग्राहक का ईमेल प्रदान करके, Trimlyt नो-शो को कम करने के लिए रिमाइंडर भेज सकता है।</strong>",
+        client_email_placeholder: "वैकल्पिक, अनुस्मारक के लिए",
         new_appointment: "नया अपॉइंटमेंट",
         edit_appointment: "अपॉइंटमेंट संपादित करें",
         options: "विकल्प",
@@ -2503,6 +2890,7 @@ const translations = {
         appointment_updated: "अपॉइंटमेंट अपडेट किया गया!",
         appointment_created: "अपॉइंटमेंट बनाया गया!",
         no_matching_appointments: "कोई मेल खाने वाला अपॉइंटमेंट नहीं मिला।",
+        no_email_warning: "कोई ईमेल प्रदान नहीं किया गया। अनुस्मारक नहीं भेजे जाएंगे।",
         status_canceled: "रद्द किया गया",
         status_noshow: "नहीं आया",
         today: "आज",
@@ -2533,7 +2921,17 @@ const translations = {
         back: "वापस",
         coming_soon: "जल्द आ रहा है",
         google_calendar: "गूगल कैलेंडर",
-        apple_calendar: "एप्पल कैलेंडर"
+        apple_calendar: "एप्पल कैलेंडर",
+        no_shows_month: "नो-शो (महीना)",
+        lost: "नुकसान:",
+        integrations: "एकीकरण",
+        connect_google: "Google खाता कनेक्ट करें",
+        google_integration_desc: "स्वचालित ईमेल अनुस्मारक भेजने के लिए कनेक्ट करें।",
+        not_connected: "कनेक्ट नहीं है",
+        disconnect: "डिस्कनेक्ट करें",
+        google_connected: "Google खाता कनेक्ट हो गया!",
+        confirm_disconnect: "Google खाता डिस्कनेक्ट करें?",
+        disconnected: "डिस्कनेक्ट किया गया।"
     }
 };
 
@@ -2564,7 +2962,7 @@ function applyTranslations() {
                 // Preserve HTML structure if needed, but for now textContent is safer
                 // If we need HTML (like bold tags in guides), we can use innerHTML
                 // The guide texts have \n which we might want to convert to <br>
-                if (key.includes('guide_text')) {
+                if (key.includes('guide_text') || key === 'client_email') {
                     el.innerHTML = translations[lang][key].replace(/\n/g, '<br>');
                 } else {
                     el.textContent = translations[lang][key];

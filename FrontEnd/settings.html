@@ -18,7 +18,20 @@
         </header>
 
         <main class="content">
+
+<br><br>
             <form id="settingsForm">
+                                <!-- Integrations Section -->
+                <h3 style="font-size: 1rem; margin-bottom: 12px; color: var(--text-muted);" data-i18n="integrations">Integrations</h3>
+                <div class="card" style="padding: 16px; margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <div style="font-weight: 600;">Google Calendar & Gmail</div>
+                        <div id="googleStatus" style="font-size: 0.8rem; color: var(--text-muted);">Checking...</div>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;" data-i18n="google_integration_desc">Connect to sync with Google Calendar. Trimlyt only accesses calendar events and basic identity.</p>
+                    <button type="button" id="connectGoogleBtn" class="btn btn-secondary btn-sm" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;"><span style="font-size: 1.2em;">G</span> <span data-i18n="connect_google">Connect Google Account</span></button>
+                </div>
+<br><br>
                 <div class="input-group">
                     <label for="monthlyGoal" data-i18n="monthly_goal">Monthly Revenue Goal</label>
                     <div style="display: flex; gap: 10px;">
@@ -90,7 +103,6 @@
                     </select>
                 </div>
 <br>
-
                 <div class="input-group" style="display: flex; justify-content: space-between; align-items: center;">
                     <label for="themeToggle" style="margin: 0;" data-i18n="dark_mode">Dark Mode</label>
                     <label class="switch">
@@ -104,6 +116,14 @@
             </footer>
         </main>
 <br><br><br><br>
+        <!-- Onboarding / Tasks Modal -->
+        <div id="onboardingModal" class="modal hidden">
+            <div class="modal-content">
+                <button id="closeOnboardingBtn" style="position: absolute; top: 12px; right: 12px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">✕</button>
+                <div id="onboardingContent"></div>
+            </div>
+        </div>
+
         <!-- Profile / Account Modal -->
         <div id="profileModal" class="modal hidden">
             <div class="modal-content">
@@ -144,15 +164,29 @@
         <!-- Info Modal -->
         <div id="infoModal" class="modal hidden">
             <div class="modal-content">
-                <h3 data-i18n="settings_guide">Settings Guide</h3>
-                <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 24px;" data-i18n="settings_guide_text">
-                    Customize the app to fit your workflow.
-                    <br><br>
-                    • <strong>Monthly Goal:</strong> The revenue target used for the progress bar on the Dashboard.<br>
-                    • <strong>Appointment Gap:</strong> The mandatory buffer time between bookings to prevent conflicts.<br>
-                    • <strong>Auto-Complete:</strong> If you forget to update an appointment, the app will automatically set it to this status (e.g., 'Finished') after 1 hour.
-                </p>
-                <button id="closeInfoModal" class="btn btn-primary" data-i18n="got_it">Got it</button>
+                    <h3>Settings Guide</h3>
+                    <p style="color: var(--text-muted); line-height: 1.6;">Configure Trimlyt to match your workflow. Below are the main settings and how they affect the app.</p>
+
+                    <h4 style="margin-top:12px;">Integrations</h4>
+                    <p style="color: var(--text-muted);">Connect your Google account to import calendar events (TL format). We only request minimal permissions: read/write calendar events and your basic account email. We do not access or send your email.</p>
+
+                    <h4 style="margin-top:12px;">Monthly Goal</h4>
+                    <p style="color: var(--text-muted);">Set your target revenue for the month. The Dashboard progress bar uses this value.</p>
+
+                    <h4 style="margin-top:12px;">Services</h4>
+                    <p style="color: var(--text-muted);">Manage the list of services you offer. These populate the appointment creation form and help with quick entry and analytics.</p>
+
+                    <h4 style="margin-top:12px;">Appointment Gap</h4>
+                    <p style="color: var(--text-muted);">This enforces a minimum time between bookings to avoid overlap. If an appointment conflicts with this gap it will be rejected when creating or updating.</p>
+
+                    <h4 style="margin-top:12px;">Auto-Complete</h4>
+                    <p style="color: var(--text-muted);">If an appointment passes and is still "Scheduled", Trimlyt can automatically mark it as Finished, Canceled, or No Show based on your preference. This helps keep your records up-to-date.</p>
+
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 12px;">Privacy & terms: <a href="privacyPolicy.html" style="color: var(--primary-color);">Privacy Policy</a> • <a href="termsOfService.html" style="color: var(--primary-color);">Terms of Service</a></p>
+                    <button id="closeInfoModal" class="btn btn-primary">Got it</button>
+                    <button class="scroll-to-bottom" title="Scroll to end" aria-label="Scroll to end">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+                    </button>
             </div>
         </div>
 

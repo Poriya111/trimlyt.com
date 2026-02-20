@@ -77,12 +77,25 @@
                     <p class="value" id="lowServiceValue" style="font-size: 1.2rem;">-</p>
                     <p class="expected-value" id="lowServiceRevenue">-</p>
                 </div>
+                <div class="card metric-card">
+                    <h3 data-i18n="no_shows_month">No Shows (Month)</h3>
+                    <p class="value" id="noShowValue" style="font-size: 1.2rem;">0</p>
+                    <p class="expected-value" id="noShowLost" style="color: var(--danger-color);">-</p>
+                </div>
             </section>
 
             <footer class="app-footer">
                 <p><span class="logo-t">T</span>rimlyt &copy; 2026 <strong>Version 1.0</strong></p>
             </footer>
         </main>
+
+        <!-- Onboarding / Tasks Modal -->
+        <div id="onboardingModal" class="modal hidden">
+            <div class="modal-content">
+                <button id="closeOnboardingBtn" style="position: absolute; top: 12px; right: 12px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">✕</button>
+                <div id="onboardingContent"></div>
+            </div>
+        </div>
 
         <!-- Add Choice Modal -->
         <div id="addChoiceModal" class="modal hidden">
@@ -123,8 +136,12 @@
                         <input type="datetime-local" id="dateInput" required>
                     </div>
                     <div class="input-group">
+                        <label for="clientEmailInput" data-i18n="client_email"></label>
+                        <input type="email" id="clientEmailInput" data-i18n="client_email_placeholder">
+                    </div>
+                    <div class="input-group">
                         <label data-i18n="extras">Extras (Optional)</label>
-                        <input type="text" id="extrasInput" placeholder="Tip, etc." data-i18n="extras">
+                        <input type="text" id="extrasInput" placeholder="Client Name, Notes, etc." data-i18n="extras_placeholder">
                     </div>
                     <button type="submit" class="btn btn-primary" data-i18n="save">Save</button>
                     <button type="button" id="closeAddModal" class="btn btn-text" data-i18n="cancel">Cancel</button>
@@ -147,16 +164,36 @@
         <!-- Info Modal -->
         <div id="infoModal" class="modal hidden">
             <div class="modal-content">
-                <h3 data-i18n="dashboard_guide">Dashboard Guide</h3>
-                <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 24px;" data-i18n="dashboard_guide_text">
-                    This is your main command center.
-                    <br><br>
-                    • <strong>Revenue (Big Number):</strong> Cash secured. Only counts 'Finished' appointments.<br>
-                    • <strong>Exp (Expected):</strong> Your potential total. Counts both 'Finished' and 'Scheduled' appointments.<br>
-                    • <strong>Goal:</strong> Tracks your progress toward your monthly target based on actual revenue.<br>
-                    • <strong>Walk-in:</strong> Quickly logs a cut as 'Finished' for right now, skipping the schedule.
-                </p>
-                <button id="closeInfoModal" class="btn btn-primary" data-i18n="got_it">Got it</button>
+                    <h3>Dashboard Guide</h3>
+                    <p style="color: var(--text-muted); line-height: 1.6;">This page is your control center. It summarizes revenue, service performance, and busy hours so you can manage your business efficiently.</p>
+
+                    <h4 style="margin-top:12px;">Key Sections</h4>
+                    <ul style="color: var(--text-muted); line-height: 1.6;">
+                        <li><strong>Revenue Cards:</strong> The large number shows confirmed revenue (<em>Finished</em> appointments). The expected value includes both <em>Finished</em> and <em>Scheduled</em> appointments.</li>
+                        <li><strong>Goal:</strong> Shows progress toward your monthly revenue target. Update this in <strong>Settings</strong>.</li>
+                        <li><strong>Busy Hours:</strong> Visualizes when you typically have appointments—useful for staffing and promotions.</li>
+                        <li><strong>Service Performance:</strong> See which services bring the most revenue so you can optimize your offerings.</li>
+                    </ul>
+
+                    <h4 style="margin-top:12px;">How Google Integration Works</h4>
+                    <p style="color: var(--text-muted); line-height: 1.6;">If you connect a Google account, Trimlyt can import events from your Google Calendar. Only events you explicitly mark for Trimlyt are imported — use the <strong>TL [Service] [Price]</strong> format in the event title (example: <em>TL Haircut 25</em>).</p>
+
+                    <div style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 8px; margin: 8px 0; color: var(--text-muted);">
+                        <strong>Important:</strong> Trimlyt does <strong>not</strong> access your email or send messages on your behalf. We only request minimal permissions to read and write calendar events and see your basic account email.
+                    </div>
+
+                    <h4 style="margin-top:12px;">Best Practices</h4>
+                    <ul style="color: var(--text-muted); line-height: 1.6;">
+                        <li>Create appointments directly in Trimlyt when possible — this ensures accurate metrics and mobile UX.</li>
+                        <li>Use Google import for bulk or historic events only; mark events with the TL prefix to avoid accidental imports.</li>
+                        <li>Set a sensible <strong>Appointment Gap</strong> in Settings to prevent overlapping bookings.</li>
+                    </ul>
+
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 12px;">Privacy & terms: <a href="privacyPolicy.html" style="color: var(--primary-color);">Privacy Policy</a> • <a href="termsOfService.html" style="color: var(--primary-color);">Terms of Service</a></p>
+                    <button id="closeInfoModal" class="btn btn-primary">Got it</button>
+                    <button class="scroll-to-bottom" title="Scroll to end" aria-label="Scroll to end">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+                    </button>
             </div>
         </div>
 

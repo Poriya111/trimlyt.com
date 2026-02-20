@@ -12,6 +12,8 @@ const UserSchema = new mongoose.Schema({
         appointmentGap: { type: Number, default: 60 },
         language: { type: String, default: 'en' }
     },
+    googleRefreshToken: { type: String, default: null },
+    googleEmail: { type: String, default: null },
     createdAt: { type: Date, default: Date.now }
 });
 

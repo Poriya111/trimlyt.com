@@ -224,7 +224,7 @@ body {
     background: transparent;
     border: 2px solid var(--primary-color);
     color: var(--primary-color);
-    transition: all 0.3s ease-in-out;
+    transition: all 0.4s ease;
 }
 
 #walkInBtn:hover {
@@ -233,6 +233,13 @@ body {
     color: #ffffff;
     border-color: transparent;
     box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.5);
+    transform: translateY(-3px) scale(1.02);
+}
+
+.btn-connected {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border-color: var(--success-color);
 }
 
 .profile-pic-placeholder {
@@ -330,11 +337,6 @@ body {
     z-index: 50;
 }
 
-.app-header h2 {
-    font-size: 1.1rem;
-    font-weight: 600;
-}
-
 .header-with-action {
     display: flex;
     justify-content: space-between;
@@ -397,10 +399,6 @@ body {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-}
 
 .metrics-grid {
     display: grid;
@@ -590,6 +588,8 @@ body {
     border-radius: 24px 24px 0 0;
     padding: 32px 24px;
     box-shadow: 0 -10px 50px rgba(0,0,0,0.2);
+    max-height: 80vh;
+    overflow: auto;
     animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -872,6 +872,68 @@ select {
     display: none !important;
 }
 
+/* --- Chart Styles --- */
+#busyHoursChart {
+    display: flex;
+    align-items: flex-end;
+    height: 120px;
+    gap: 3px;
+    padding-bottom: 20px; /* Space for labels */
+    margin-top: 10px;
+}
+
+#busyHoursYAxis {
+    display: none !important;
+}
+
+.chart-bar {
+    flex: 1;
+    background: var(--primary-gradient);
+    border-radius: 4px 4px 0 0;
+    position: relative;
+    min-width: 6px;
+    transform-origin: bottom;
+}
+
+
+.chart-bar-value {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 6px;
+    background-color: var(--text-main);
+    color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+[data-theme="dark"] .chart-bar-value {
+    color: #1f2937;
+}
+
+.chart-bar:hover .chart-bar-value {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-2px);
+}
+
+.chart-bar-label {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
 .service-autocomplete-group {
     position: relative;
 }
@@ -905,65 +967,79 @@ select {
     font-size: 0.9em;
 }
 
-.header-logo {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    font-weight: 700;
-    font-size: 1.5rem;
-    color: var(--text-main);
-    pointer-events: none;
-    white-space: nowrap;
-}
-
-.logo-t {
-    color: #7660f1;
-}
-
-/* Analytics Charts */
-.chart-wrapper {
+/* Modal Overlay and Content */
+.modal {
+    position: fixed;
+    inset: 0;
     display: flex;
-    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    background: var(--modal-bg);
+    z-index: 300;
+    padding: 24px;
 }
 
-.chart-y-axis {
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--glass-shadow);
+    width: min(720px, 100%);
+    max-width: 720px;
+    max-height: 80vh;
+    overflow: auto;
+    padding: 20px;
+    position: relative;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    height: 140px;
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    text-align: right;
-    padding-bottom: 24px;
 }
 
-.chart-container {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    height: 140px;
-    padding-bottom: 24px;
-    gap: 3px;
-    flex: 1;
+.modal-content > *:not(:first-child) {
+    /* ensure spacing inside modal */
+    margin-top: 12px;
 }
 
-.chart-bar {
-    flex: 1;
-    background: var(--primary-gradient);
-    border-radius: 4px 4px 0 0;
-    opacity: 0.8;
-    position: relative;
-    min-height: 4px;
-    transition: height 0.5s ease;
+.modal-content .modal-body,
+.modal-content #onboardingContent,
+.modal-content #infoContent {
+    overflow: auto;
+    padding-right: 8px; /* give small room for scrollbar */
 }
 
-.chart-bar-label {
+/* Ensure close buttons don't cause overflow */
+.modal-content button[ id^="close"], .modal-content button[ id^="close" ] {
+    z-index: 5;
+}
+
+/* Scroll-to-bottom circular button inside modals */
+.scroll-to-bottom {
     position: absolute;
-    bottom: -20px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    white-space: nowrap;
+    right: 16px;
+    bottom: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--option-bg);
+    border: 1px solid rgba(0,0,0,0.06);
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    z-index: 12;
+}
+
+.scroll-to-bottom:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+.scroll-to-bottom svg {
+    width: 18px;
+    height: 18px;
+    fill: var(--text-main);
 }
