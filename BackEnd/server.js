@@ -36,10 +36,16 @@ app.get('/', (req, res) => {
 });
 
 // --- Google OAuth 2.0 Configuration ---
+const oauthRedirect = process.env.GOOGLE_REDIRECT_URI || `http://localhost:${PORT}/api/auth/google/callback`;
+if (!process.env.GOOGLE_REDIRECT_URI) {
+    console.warn('WARNING: GOOGLE_REDIRECT_URI not set — falling back to localhost. This may trigger verification warnings in production.');
+}
+console.log('Google OAuth Client ID:', process.env.GOOGLE_CLIENT_ID);
+console.log('Google OAuth Redirect URI:', oauthRedirect);
 const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URI || `http://localhost:${PORT}/api/auth/google/callback`
+    oauthRedirect
 );
 
 // --- Integration Routes ---
