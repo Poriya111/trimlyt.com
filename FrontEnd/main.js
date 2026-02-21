@@ -8,9 +8,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('trimlyt_theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
 
+    // --- Initialize Cookie Consent Banner ---
+    initCookieConsent();
+
     // --- Route Protection ---
     // Pages that don't require auth
-    const publicPages = ['index.html', 'privacyPolicy.html', 'termsOfService.html'];
+    const publicPages = ['index.html', 'privacyPolicy.html', 'termsOfService.html', 'subscription.html'];
     const isPublicPage = publicPages.includes(page);
 
     // If not logged in and trying to access a protected page, redirect to login
@@ -2985,5 +2988,55 @@ function applyTranslations() {
         if (typeof updateDashboardMetrics === 'function') {
             updateDashboardMetrics();
         }
+    }
+}
+
+// --- Cookie Consent Management ---
+function initCookieConsent() {
+    const consentKey = 'trimlyt_analytics_consent';
+    const userConsent = localStorage.getItem(consentKey);
+
+    // If user has already made a choice, don't show banner
+    if (userConsent) {
+        return;
+    }
+
+    // Create and inject the cookie consent banner
+    const bannerHTML = `
+        <div class="cookie-consent-banner" id="cookieConsentBanner">
+            <div class="cookie-consent-message">
+                <strong>We use analytics to improve Trimlyt.</strong>
+                <span>Google Analytics helps us understand how you use the app. Visit our <a href="privacyPolicy.html" target="_blank">Privacy Policy</a> to learn more.</span>
+            </div>
+            <div class="cookie-consent-actions">
+                <button class="cookie-consent-dismiss" id="cookieDismiss">Dismiss</button>
+                <button class="cookie-consent-accept" id="cookieAccept">Accept</button>
+            </div>
+        </div>
+    `;
+
+    // Inject banner into the DOM (after body loads)
+    if (document.body) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = bannerHTML;
+        document.body.appendChild(tempDiv.firstElementChild);
+
+        // Attach event listeners
+        document.getElementById('cookieAccept').addEventListener('click', () => {
+            localStorage.setItem(consentKey, 'accepted');
+            hideCookieBanner();
+        });
+
+        document.getElementById('cookieDismiss').addEventListener('click', () => {
+            localStorage.setItem(consentKey, 'dismissed');
+            hideCookieBanner();
+        });
+    }
+}
+
+function hideCookieBanner() {
+    const banner = document.getElementById('cookieConsentBanner');
+    if (banner) {
+        banner.classList.add('hidden');
     }
 }
