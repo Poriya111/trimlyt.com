@@ -30,6 +30,7 @@ mongoose.connect(process.env.MONGO_URI)
 app.use(express.static(path.join(__dirname, '../FrontEnd')));
 
 // Handle SPA or default route (Serve index.html for root)
+// Serve the app landing / login page at root (publicly viewable)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../FrontEnd/index.html'));
 });

@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Route Protection ---
     // Pages that don't require auth
-    const publicPages = ['index.html'];
+    const publicPages = ['index.html', 'privacyPolicy.html', 'termsOfService.html'];
     const isPublicPage = publicPages.includes(page);
 
     // If not logged in and trying to access a protected page, redirect to login

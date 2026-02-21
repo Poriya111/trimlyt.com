@@ -28,8 +28,21 @@
                 <button type="button" class="btn btn-secondary" id="signupBtn" data-i18n="signup">Sign Up</button>
             </div>
         </form>
+        <!-- Public app description visible without login (helps OAuth verification) -->
+        <section style="max-width:900px;margin:18px auto;padding:18px;">
+            <h2>About Trimlyt</h2>
+            <p style="color:var(--text-muted);">Trimlyt is a lightweight, privacy-first appointment tracking and analytics tool built for barbers. Log appointments, track revenue by service, view busy hours, and optionally sync with Google Calendar. No customer emails are read or stored beyond what you enter.</p>
+            <p style="color:var(--text-muted);">For more information, view our <a href="privacyPolicy.html">Privacy Policy</a> and <a href="termsOfService.html">Terms of Service</a>.</p>
+        </section>
+
         <footer class="app-footer">
-            <p><span class="logo-t">T</span>rimlyt &copy; 2026 <strong>Version 1.0</strong></p>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+                <p><span class="logo-t">T</span>rimlyt &copy; 2026 <strong>Version 1.0</strong></p>
+                <nav style="display:flex;gap:12px;align-items:center;">
+                    <a href="privacyPolicy.html">Privacy Policy</a>
+                    <a href="termsOfService.html">Terms</a>
+                </nav>
+            </div>
         </footer>
     </div>
     <script src="main.js"></script>
