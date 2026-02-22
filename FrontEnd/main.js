@@ -1005,6 +1005,18 @@ async function handleAppointmentSubmit(e, modal) {
 
         let payload = { service, price, date, extras, clientEmail };
 
+        // Ensure datetime-local value is converted to an ISO UTC timestamp
+        // so server and Google Calendar receive the correct moment matching user's local selection.
+        if (payload.date) {
+            try {
+                const localDate = new Date(payload.date);
+                // If the date input was a 'YYYY-MM-DDTHH:mm' string, this creates a local Date.
+                payload.date = localDate.toISOString();
+            } catch (e) {
+                // leave as-is on parse failure
+            }
+        }
+
         if (isWalkIn) {
             payload.status = 'Finished';
             payload.date = new Date().toISOString();
