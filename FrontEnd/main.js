@@ -1870,115 +1870,129 @@ async function initOnboarding(token) {
     
     if (!modal || !content) return;
 
-    // Check if Google is connected
-    let isGoogleConnected = false;
-    try {
-        const res = await fetch('/api/auth/google/status', { headers: { 'x-auth-token': token } });
-        const data = await res.json();
-        isGoogleConnected = data.connected;
-    } catch (err) {
-        console.error('Error checking Google status:', err);
+    // Helper to check status
+    const checkGoogleStatus = async () => {
+        try {
+            const res = await fetch('/api/auth/google/status', { headers: { 'x-auth-token': token } });
+            const data = await res.json();
+            return data.connected;
+        } catch (err) {
+            console.error('Error checking Google status:', err);
+            return false;
+        }
+    };
+
+    // Helper to render and show task
+    const showTask = (task) => {
+        if (task === 'google_task1') {
+            content.innerHTML = `
+                <h3 style="margin-bottom: 16px; color: var(--text-primary);">📱 Connect Your Google Account</h3>
+                <p style="color: var(--text-muted); margin-bottom: 12px; line-height: 1.6;">
+                    Connect your Google Account to unlock these features:
+                </p>
+                <ul style="margin: 12px 0 16px 16px; color: var(--text-muted); line-height: 1.8;">
+                    <li><strong>Sync Google Calendar</strong> — Import existing appointments to Trimlyt</li>
+                    <li><strong>Zero Email Access</strong> — Trimlyt does <u>not</u> access your email or send on your behalf</li>
+                    <li><strong>Minimal Permissions</strong> — Only calendar and basic identity</li>
+                    <li><strong>Your Data is Safe</strong> — End-to-end encrypted, no data sharing</li>
+                </ul>
+                <div style="background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 0.9rem; color: var(--text-muted);">
+                    <p style="margin: 0 0 8px 0;"><strong>Privacy & Terms:</strong></p>
+                    <p style="margin: 4px 0;"><a href="privacyPolicy.html" style="color: var(--primary-color); text-decoration: none;">Privacy Policy</a> • <a href="termsOfService.html" style="color: var(--primary-color); text-decoration: none;">Terms of Service</a></p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button id="connectGoogleTaskBtn" class="btn btn-primary" style="flex: 1;">Connect Google Account</button>
+                    <button id="skipGoogleTask1Btn" class="btn btn-text" style="flex: 1;">Maybe later</button>
+                </div>
+            `;
+
+            document.getElementById('connectGoogleTaskBtn').addEventListener('click', () => {
+                // Trigger the Google connect flow in settings
+                window.location.href = 'settings.html';
+            });
+
+            document.getElementById('skipGoogleTask1Btn').addEventListener('click', () => {
+                // We don't set permanent dismissal here anymore because it repeats every 2 mins
+                modal.classList.add('hidden');
+            });
+
+        } else if (task === 'google_task2') {
+            content.innerHTML = `
+                <h3 style="margin-bottom: 16px; color: var(--text-primary);">📅 How Google Calendar Integration Works</h3>
+                <p style="color: var(--text-muted); margin-bottom: 12px; line-height: 1.6;">
+                    Trimlyt uses a simple format to identify which events to import from your Google Calendar.
+                </p>
+                <div style="background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                    <p style="margin: 0 0 8px 0; color: var(--text-muted);"><strong>Event Title Format:</strong></p>
+                    <code style="display: block; background: rgba(0,0,0,0.1); padding: 8px; border-radius: 4px; font-family: monospace; margin-bottom: 8px; color: var(--primary-color);">TL [Service] [Price]</code>
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Example: <strong>"TL Haircut 25"</strong> or <strong>"TL Beard Trim 15"</strong></p>
+                </div>
+                <p style="color: var(--text-muted); margin-bottom: 12px; line-height: 1.6;">
+                    <strong>Why this approach?</strong> Only events you specifically mark with the "TL" keyword are imported. This ensures:
+                </p>
+                <ul style="margin: 12px 0 16px 16px; color: var(--text-muted); line-height: 1.8;">
+                    <li>You have full control over what gets imported</li>
+                    <li>Personal events stay private</li>
+                    <li>No accidental pollution of your appointment history</li>
+                </ul>
+                <div style="background: rgba(255, 193, 7, 0.1); border-left: 3px solid rgba(255, 193, 7, 0.8); padding: 12px; margin-bottom: 16px; border-radius: 4px;">
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.95rem;">
+                        <strong>💡 Best Practice:</strong> We recommend creating appointments directly in <strong>Trimlyt</strong> for better control and mobile experience. Use Google Calendar import for <strong>bulk-importing existing events only</strong>.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button id="understandTask2Btn" class="btn btn-primary" style="flex: 1;">Got It!</button>
+                    <button id="skipGoogleTask2Btn" class="btn btn-text" style="flex: 1;">Maybe later</button>
+                </div>
+            `;
+
+            document.getElementById('understandTask2Btn').addEventListener('click', () => {
+                localStorage.setItem('trimlyt_onboarding_google_task2_dismissed', 'true');
+                modal.classList.add('hidden');
+            });
+
+            document.getElementById('skipGoogleTask2Btn').addEventListener('click', () => {
+                modal.classList.add('hidden');
+            });
+        }
+        
+        modal.classList.remove('hidden');
+    };
+
+    // Close button logic
+    if (closeBtn) {
+        // Clone to remove existing listeners if any, though initOnboarding is usually called once
+        const newCloseBtn = closeBtn.cloneNode(true);
+        closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+        newCloseBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
     }
 
-    // Determine which task to show
-    const googleTask1Dismissed = localStorage.getItem('trimlyt_onboarding_google_task1_dismissed');
+    // Initial Check
+    const isGoogleConnected = await checkGoogleStatus();
     const googleTask2Dismissed = localStorage.getItem('trimlyt_onboarding_google_task2_dismissed');
 
-    let taskToShow = null;
-    if (!isGoogleConnected && !googleTask1Dismissed) {
-        taskToShow = 'google_task1';
-    } else if (isGoogleConnected && !googleTask2Dismissed) {
-        taskToShow = 'google_task2';
+    if (isGoogleConnected) {
+        // Task 2: Show immediately if connected and not dismissed
+        if (!googleTask2Dismissed) {
+            showTask('google_task2');
+        }
+    } else {
+        // Task 1: Not connected.
+        // Requirement: Open every 2 minutes. 2 minutes timer is the only trigger.
+        // So we do NOT show it immediately. We start the timer.
+        
+        setInterval(async () => {
+            const currentStatus = await checkGoogleStatus();
+            if (!currentStatus) {
+                // Only show if not already visible
+                if (modal.classList.contains('hidden')) {
+                    showTask('google_task1');
+                }
+            }
+        }, 120000); // 2 minutes
     }
-
-    // If no tasks to show, hide modal
-    if (!taskToShow) {
-        modal.classList.add('hidden');
-        return;
-    }
-
-    // Render task content
-    if (taskToShow === 'google_task1') {
-        content.innerHTML = `
-            <h3 style="margin-bottom: 16px; color: var(--text-primary);">📱 Connect Your Google Account</h3>
-            <p style="color: var(--text-muted); margin-bottom: 12px; line-height: 1.6;">
-                Connect your Google Account to unlock these features:
-            </p>
-            <ul style="margin: 12px 0 16px 16px; color: var(--text-muted); line-height: 1.8;">
-                <li><strong>Sync Google Calendar</strong> — Import existing appointments to Trimlyt</li>
-                <li><strong>Zero Email Access</strong> — Trimlyt does <u>not</u> access your email or send on your behalf</li>
-                <li><strong>Minimal Permissions</strong> — Only calendar and basic identity</li>
-                <li><strong>Your Data is Safe</strong> — End-to-end encrypted, no data sharing</li>
-            </ul>
-            <div style="background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 0.9rem; color: var(--text-muted);">
-                <p style="margin: 0 0 8px 0;"><strong>Privacy & Terms:</strong></p>
-                <p style="margin: 4px 0;"><a href="privacyPolicy.html" style="color: var(--primary-color); text-decoration: none;">Privacy Policy</a> • <a href="termsOfService.html" style="color: var(--primary-color); text-decoration: none;">Terms of Service</a></p>
-            </div>
-            <div style="display: flex; gap: 8px;">
-                <button id="connectGoogleTaskBtn" class="btn btn-primary" style="flex: 1;">Connect Google Account</button>
-                <button id="skipGoogleTask1Btn" class="btn btn-text" style="flex: 1;">Maybe later</button>
-            </div>
-        `;
-
-        document.getElementById('connectGoogleTaskBtn').addEventListener('click', () => {
-            // Trigger the Google connect flow in settings
-            window.location.href = 'settings.html';
-        });
-
-        document.getElementById('skipGoogleTask1Btn').addEventListener('click', () => {
-            localStorage.setItem('trimlyt_onboarding_google_task1_dismissed', 'true');
-            modal.classList.add('hidden');
-        });
-
-    } else if (taskToShow === 'google_task2') {
-        content.innerHTML = `
-            <h3 style="margin-bottom: 16px; color: var(--text-primary);">📅 How Google Calendar Integration Works</h3>
-            <p style="color: var(--text-muted); margin-bottom: 12px; line-height: 1.6;">
-                Trimlyt uses a simple format to identify which events to import from your Google Calendar.
-            </p>
-            <div style="background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
-                <p style="margin: 0 0 8px 0; color: var(--text-muted);"><strong>Event Title Format:</strong></p>
-                <code style="display: block; background: rgba(0,0,0,0.1); padding: 8px; border-radius: 4px; font-family: monospace; margin-bottom: 8px; color: var(--primary-color);">TL [Service] [Price]</code>
-                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Example: <strong>"TL Haircut 25"</strong> or <strong>"TL Beard Trim 15"</strong></p>
-            </div>
-            <p style="color: var(--text-muted); margin-bottom: 12px; line-height: 1.6;">
-                <strong>Why this approach?</strong> Only events you specifically mark with the "TL" keyword are imported. This ensures:
-            </p>
-            <ul style="margin: 12px 0 16px 16px; color: var(--text-muted); line-height: 1.8;">
-                <li>You have full control over what gets imported</li>
-                <li>Personal events stay private</li>
-                <li>No accidental pollution of your appointment history</li>
-            </ul>
-            <div style="background: rgba(255, 193, 7, 0.1); border-left: 3px solid rgba(255, 193, 7, 0.8); padding: 12px; margin-bottom: 16px; border-radius: 4px;">
-                <p style="margin: 0; color: var(--text-muted); font-size: 0.95rem;">
-                    <strong>💡 Best Practice:</strong> We recommend creating appointments directly in <strong>Trimlyt</strong> for better control and mobile experience. Use Google Calendar import for <strong>bulk-importing existing events only</strong>.
-                </p>
-            </div>
-            <div style="display: flex; gap: 8px;">
-                <button id="understandTask2Btn" class="btn btn-primary" style="flex: 1;">Got It!</button>
-                <button id="skipGoogleTask2Btn" class="btn btn-text" style="flex: 1;">Maybe later</button>
-            </div>
-        `;
-
-        document.getElementById('understandTask2Btn').addEventListener('click', () => {
-            localStorage.setItem('trimlyt_onboarding_google_task2_dismissed', 'true');
-            modal.classList.add('hidden');
-        });
-
-        document.getElementById('skipGoogleTask2Btn').addEventListener('click', () => {
-            modal.classList.add('hidden');
-        });
-    }
-
-    // Close button
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            modal.classList.add('hidden');
-        });
-    }
-
-    // Show modal
-    modal.classList.remove('hidden');
 }
 
 // --- Translation System ---
