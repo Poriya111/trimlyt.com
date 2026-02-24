@@ -11,9 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Initialize Cookie Consent Banner ---
     initCookieConsent();
 
-    // --- Start Google Connect Reminder (checks every 2 minutes) ---
-    if (token) startGoogleConnectReminder(token);
-
     // --- Route Protection ---
     // Pages that don't require auth
     const publicPages = ['index.html', 'privacyPolicy.html', 'termsOfService.html', 'subscription.html'];
@@ -1986,7 +1983,10 @@ async function initOnboarding(token) {
         // Requirement: Open every 2 minutes. 2 minutes timer is the only trigger.
         // So we do NOT show it immediately. We start the timer.
         
-        setInterval(async () => {
+        // Clear any existing interval to prevent duplicates
+        if (window._trimlytGoogleTaskInterval) clearInterval(window._trimlytGoogleTaskInterval);
+
+        window._trimlytGoogleTaskInterval = setInterval(async () => {
             const currentStatus = await checkGoogleStatus();
             if (!currentStatus) {
                 // Only show if not already visible
@@ -3067,44 +3067,5 @@ function hideCookieBanner() {
     const banner = document.getElementById('cookieConsentBanner');
     if (banner) {
         banner.classList.add('hidden');
-    }
-}
-
-// --- Google Connect Reminder ---
-function startGoogleConnectReminder(token) {
-    if (!token) return;
-
-    const checkAndShow = async () => {
-        try {
-            const res = await fetch('/api/auth/google/status', { headers: { 'x-auth-token': token } });
-            if (!res.ok) return;
-            const data = await res.json();
-
-            // If connected, hide modal and stop reminders
-            if (data.connected) {
-                const calModal = document.getElementById('calendarModal');
-                if (calModal) calModal.classList.add('hidden');
-                if (window._trimlytGoogleReminderInterval) {
-                    clearInterval(window._trimlytGoogleReminderInterval);
-                    window._trimlytGoogleReminderInterval = null;
-                }
-                return;
-            }
-
-            // Not connected: show the calendar/connect modal if available and not already visible
-            const calModal = document.getElementById('calendarModal');
-            if (calModal && calModal.classList.contains('hidden')) {
-                calModal.classList.remove('hidden');
-            }
-        } catch (err) {
-            // ignore errors silently
-            console.debug('Google connect reminder check failed', err);
-        }
-    };
-
-    // Run immediately, then every 2 minutes
-    checkAndShow();
-    if (!window._trimlytGoogleReminderInterval) {
-        window._trimlytGoogleReminderInterval = setInterval(checkAndShow, 120000);
     }
 }
