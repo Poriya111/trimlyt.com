@@ -1980,9 +1980,15 @@ async function initOnboarding(token) {
         }
     } else {
         // Task 1: Not connected.
-        // Requirement: Open every 2 minutes. 2 minutes timer is the only trigger.
-        // So we do NOT show it immediately. We start the timer.
         
+        // Trigger 1: Show after 3 seconds
+        setTimeout(async () => {
+            const currentStatus = await checkGoogleStatus();
+            if (!currentStatus && modal.classList.contains('hidden')) {
+                showTask('google_task1');
+            }
+        }, 3000);
+
         // Clear any existing interval to prevent duplicates
         if (window._trimlytGoogleTaskInterval) clearInterval(window._trimlytGoogleTaskInterval);
 
