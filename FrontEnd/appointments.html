@@ -79,11 +79,13 @@
         <div id="addModal" class="modal hidden">
             <div class="modal-content">
                 <h3 data-i18n="new_appointment">New Appointment</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;" data-i18n="manage_services_hint">You can manage services in the settings</p>
                 <form id="addAppointmentForm">
-                    <div class="input-group service-autocomplete-group">
+                    <div class="input-group">
                         <label data-i18n="service">Service</label>
-                        <input type="text" id="serviceInput" placeholder="e.g. Haircut" required data-i18n="service">
-                        <div id="serviceDropdown" class="custom-options"></div>
+                        <select id="serviceInput" required>
+                            <option value="" disabled selected data-i18n="select_service">Select Service</option>
+                        </select>
                     </div>
                     <div class="input-group">
                         <label data-i18n="price">Price</label>
@@ -92,10 +94,6 @@
                     <div class="input-group">
                         <label data-i18n="date_time">Date & Time</label>
                         <input type="datetime-local" id="dateInput" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="clientEmailInput" data-i18n="client_email"></label>
-                        <input type="email" id="clientEmailInput" data-i18n="client_email_placeholder">
                     </div>
                     <div class="input-group">
                         <label data-i18n="extras">Extras (Optional)</label>

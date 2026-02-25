@@ -637,8 +637,28 @@ function initAppointmentsPage() {
         btnEdit.addEventListener('click', () => {
             const appointment = currentAppointments.find(a => a._id === selectedAppointmentId);
             if (appointment) {
-                    document.getElementById('clientEmailInput').value = appointment.clientEmail || '';
-                document.getElementById('serviceInput').value = appointment.service;
+                const serviceInput = document.getElementById('serviceInput');
+                // Check if option exists, if not (e.g. deleted service or walk-in), add it temporarily
+                let optionExists = Array.from(serviceInput.options).some(o => o.value === appointment.service);
+                if (!optionExists) {
+                    const opt = document.createElement('option');
+                    opt.value = appointment.service;
+                    opt.textContent = appointment.service;
+                    serviceInput.appendChild(opt);
+                }
+                serviceInput.value = appointment.service;
+                
+                // Update custom select UI for Edit
+                const wrapper = serviceInput.closest('.custom-select-wrapper');
+                if (wrapper) {
+                    const trigger = wrapper.querySelector('.custom-select-trigger');
+                    if (trigger) trigger.textContent = appointment.service;
+                    wrapper.querySelectorAll('.custom-option').forEach(opt => {
+                        if (opt.dataset.value === appointment.service) opt.classList.add('selected');
+                        else opt.classList.remove('selected');
+                    });
+                }
+
                 document.getElementById('priceInput').value = appointment.price;
                 
                 const d = new Date(appointment.date);
@@ -739,6 +759,14 @@ function initAppointmentsPage() {
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             document.getElementById('dateInput').min = now.toISOString().slice(0, 16);
             
+            // Reset custom select UI
+            const serviceWrapper = document.getElementById('serviceInput').closest('.custom-select-wrapper');
+            if (serviceWrapper) {
+                const trigger = serviceWrapper.querySelector('.custom-select-trigger');
+                if (trigger) trigger.textContent = t('select_service');
+                serviceWrapper.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
+            }
+
             // Show Date Input
             if (dateInput && dateInput.parentElement) {
                 dateInput.parentElement.style.display = 'block';
@@ -774,7 +802,7 @@ function initAppointmentsPage() {
     }
 
     const token = localStorage.getItem('trimlyt_token');
-    if (token) setupServiceAutocomplete(token);
+    if (token) setupServiceSelect(token);
 
     initProfileLogic();
     loadAppointments(true); // Pass true to reset pagination
@@ -876,6 +904,14 @@ function initDashboardPage() {
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             document.getElementById('dateInput').min = now.toISOString().slice(0, 16);
             
+            // Reset custom select UI
+            const serviceWrapper = document.getElementById('serviceInput').closest('.custom-select-wrapper');
+            if (serviceWrapper) {
+                const trigger = serviceWrapper.querySelector('.custom-select-trigger');
+                if (trigger) trigger.textContent = t('select_service');
+                serviceWrapper.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
+            }
+
             // Show Date Input
             if (dateInput && dateInput.parentElement) {
                 dateInput.parentElement.style.display = 'block';
@@ -911,7 +947,7 @@ function initDashboardPage() {
     }
 
     const token = localStorage.getItem('trimlyt_token');
-    if (token) setupServiceAutocomplete(token);
+    if (token) setupServiceSelect(token);
 
     initProfileLogic();
     updateDashboardMetrics();
@@ -987,7 +1023,6 @@ async function handleAppointmentSubmit(e, modal) {
     const price = document.getElementById('priceInput').value;
     const date = document.getElementById('dateInput').value;
     const extras = document.getElementById('extrasInput').value;
-    const clientEmail = document.getElementById('clientEmailInput').value;
     const token = localStorage.getItem('trimlyt_token');
     const submitBtn = form.querySelector('button[type="submit"]');
 
@@ -1003,7 +1038,7 @@ async function handleAppointmentSubmit(e, modal) {
         const url = mode === 'edit' ? `/api/appointments/${editId}` : '/api/appointments';
         const method = mode === 'edit' ? 'PUT' : 'POST';
 
-        let payload = { service, price, date, extras, clientEmail };
+        let payload = { service, price, date, extras };
 
         // Ensure datetime-local value is converted to an ISO UTC timestamp
         // so server and Google Calendar receive the correct moment matching user's local selection.
@@ -1060,10 +1095,6 @@ async function handleAppointmentSubmit(e, modal) {
                     showNotification(`📅 Synced to Google Calendar (${userData.googleEmail})`, 'info');
                 }, 500);
             }
-        }
-
-        if (mode !== 'edit' && !payload.clientEmail && !isWalkIn) {
-            showNotification(t('no_email_warning'), 'warning');
         }
 
         if (modal) modal.classList.add('hidden');
@@ -1196,17 +1227,11 @@ function renderAppointments(appointments) {
             extrasHtml = `<p style="font-size: 0.85rem; opacity: 0.8; margin-top: 2px; font-style: italic;">+ ${app.extras}</p>`;
         }
 
-        let emailHtml = '';
-        if (app.clientEmail) {
-            emailHtml = `<p style="font-size: 0.8rem; color: var(--primary-color); margin-top: 4px; opacity: 0.9;">${app.clientEmail}</p>`;
-        }
-
         return `
         <div class="appointment-item" style="${statusStyle}">
             <div class="appointment-info">
                 <h4>${app.service}${statusText}</h4>
                 <p>${new Date(app.date).toLocaleString()}</p>
-                ${emailHtml}
                 ${extrasHtml}
             </div>
             <div class="appointment-right">
@@ -1750,76 +1775,53 @@ function setupCustomSelects() {
         wrapper.appendChild(customSelect);
     });
 
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', (e) => {
-        document.querySelectorAll('.custom-select').forEach(s => {
-            if (!s.contains(e.target)) {
-                s.classList.remove('open');
-            }
-        });
-    });
-}
-
-async function setupServiceAutocomplete(token) {
-    const serviceInput = document.getElementById('serviceInput');
-    const priceInput = document.getElementById('priceInput');
-    const serviceDropdown = document.getElementById('serviceDropdown');
-    
-    if (!serviceInput || !priceInput || !serviceDropdown) return;
-
-    serviceInput.setAttribute('autocomplete', 'off');
-
-    let services = [];
-    try {
-        const res = await fetch('/api/services', { headers: { 'x-auth-token': token } });
-        if (res.ok) services = await res.json();
-    } catch (err) {
-        console.error('Failed to load services for autocomplete', err);
-        return;
-    }
-
-    const renderDropdown = (filteredServices) => {
-        const currency = localStorage.getItem('trimlyt_currency') || '$';
-        if (filteredServices.length === 0) {
-            serviceDropdown.innerHTML = `<div class="custom-option" style="justify-content: center; color: var(--text-muted);">${t('no_matching_services')}</div>`;
-        } else {
-            serviceDropdown.innerHTML = filteredServices.map(s => `
-                <div class="service-option" data-name="${s.name}" data-price="${s.price}">
-                    <span>${s.name}</span>
-                    <span class="service-price">${currency}${s.price}</span>
-                </div>
-            `).join('');
-        }
-
-        serviceDropdown.querySelectorAll('.service-option').forEach(option => {
-            option.addEventListener('click', () => {
-                if (option.dataset.name) {
-                    serviceInput.value = option.dataset.name;
-                    priceInput.value = option.dataset.price;
-                    serviceDropdown.classList.remove('open');
+    // Close dropdowns when clicking outside (ensure only added once)
+    if (!window._customSelectListenerAdded) {
+        document.addEventListener('click', (e) => {
+            document.querySelectorAll('.custom-select').forEach(s => {
+                if (!s.contains(e.target)) {
+                    s.classList.remove('open');
                 }
             });
         });
-    };
+        window._customSelectListenerAdded = true;
+    }
+}
 
-    serviceInput.addEventListener('focus', () => {
-        renderDropdown(services);
-        serviceDropdown.classList.add('open');
-    });
+async function setupServiceSelect(token) {
+    const serviceInput = document.getElementById('serviceInput');
+    const priceInput = document.getElementById('priceInput');
+    
+    if (!serviceInput || !priceInput) return;
 
-    serviceInput.addEventListener('input', () => {
-        const searchTerm = serviceInput.value.toLowerCase();
-        const filtered = services.filter(s => s.name.toLowerCase().includes(searchTerm));
-        renderDropdown(filtered);
-        serviceDropdown.classList.add('open');
-    });
+    try {
+        const res = await fetch('/api/services', { headers: { 'x-auth-token': token } });
+        if (res.ok) {
+            const services = await res.json();
+            
+            // Rebuild options, keeping placeholder
+            const placeholderText = t('select_service');
+            let html = `<option value="" disabled selected>${placeholderText}</option>`;
+            
+            services.forEach(s => {
+                html += `<option value="${s.name}" data-price="${s.price}">${s.name}</option>`;
+            });
+            
+            serviceInput.innerHTML = html;
 
-    document.addEventListener('click', (e) => {
-        const container = serviceInput.parentElement;
-        if (container && !container.contains(e.target)) {
-            serviceDropdown.classList.remove('open');
+            serviceInput.addEventListener('change', () => {
+                const selectedOption = serviceInput.options[serviceInput.selectedIndex];
+                const price = selectedOption.dataset.price;
+                if (price) {
+                    priceInput.value = price;
+                }
+            });
+
+            setupCustomSelects();
         }
-    });
+    } catch (err) {
+        console.error('Failed to load services', err);
+    }
 }
 
 async function syncGoogleCalendar() {
@@ -1906,9 +1908,17 @@ async function initOnboarding(token) {
                 </div>
             `;
 
-            document.getElementById('connectGoogleTaskBtn').addEventListener('click', () => {
-                // Trigger the Google connect flow in settings
-                window.location.href = 'settings.html';
+            document.getElementById('connectGoogleTaskBtn').addEventListener('click', async () => {
+                const token = localStorage.getItem('trimlyt_token');
+                try {
+                    const res = await fetch('/api/auth/google/url', { headers: { 'x-auth-token': token } });
+                    const data = await res.json();
+                    if (data.url) {
+                        window.location.href = data.url;
+                    }
+                } catch (err) {
+                    showNotification('Error initiating connection', 'error');
+                }
             });
 
             document.getElementById('skipGoogleTask1Btn').addEventListener('click', () => {
@@ -2060,8 +2070,6 @@ const translations = {
         date_time: "Date & Time",
         extras: "Extras (Optional)",
         extras_placeholder: "Client Name, Notes, etc.",
-        client_email: "Client Email (Optional) <strong style='display: block; font-weight: normal; font-size: 0.8rem; opacity: 0.8; margin-top: 4px;'>Optional, used for client contact only.</strong>",
-        client_email_placeholder: "Optional",
         new_appointment: "New Appointment",
         edit_appointment: "Edit Appointment",
         options: "Options",
@@ -2088,7 +2096,6 @@ const translations = {
         appointment_updated: "Appointment updated!",
         appointment_created: "Appointment created!",
         no_matching_appointments: "No matching appointments found.",
-        no_email_warning: "No email provided.",
         status_canceled: "Canceled",
         status_noshow: "No Show",
         today: "Today",
@@ -2129,7 +2136,9 @@ const translations = {
         disconnect: "Disconnect",
         google_connected: "Google Account Connected!",
         confirm_disconnect: "Disconnect Google Account?",
-        disconnected: "Disconnected."
+        disconnected: "Disconnected.",
+        manage_services_hint: "You can manage services in the settings",
+        select_service: "Select Service"
     },
     de: {
         app_name: "Trimlyt",
@@ -2180,8 +2189,6 @@ const translations = {
         date_time: "Datum & Zeit",
         extras: "Extras (Optional)",
         extras_placeholder: "Kundenname, Notizen, etc.",
-        client_email: "Kunden-E-Mail (Optional) <strong style='display: block; font-weight: normal; font-size: 0.8rem; opacity: 0.8; margin-top: 4px;'>Durch Angabe der E-Mail des Kunden kann Trimlyt Erinnerungen senden, um Nicht-Erscheinen zu reduzieren.</strong>",
-        client_email_placeholder: "Optional, für Erinnerungen",
         new_appointment: "Neuer Termin",
         edit_appointment: "Termin bearbeiten",
         options: "Optionen",
@@ -2208,7 +2215,6 @@ const translations = {
         appointment_updated: "Termin aktualisiert!",
         appointment_created: "Termin erstellt!",
         no_matching_appointments: "Keine passenden Termine gefunden.",
-        no_email_warning: "Keine E-Mail angegeben. Erinnerungen werden nicht gesendet.",
         status_canceled: "Abgesagt",
         status_noshow: "Nicht erschienen",
         today: "Heute",
@@ -2300,8 +2306,6 @@ const translations = {
         date_time: "Datum & Tijd",
         extras: "Extra's (Optioneel)",
         extras_placeholder: "Klantnaam, notities, etc.",
-        client_email: "E-mail Klant (Optioneel) <strong style='display: block; font-weight: normal; font-size: 0.8rem; opacity: 0.8; margin-top: 4px;'>Door het e-mailadres van de klant op te geven, kan Trimlyt herinneringen sturen om no-shows te verminderen.</strong>",
-        client_email_placeholder: "Optioneel, voor herinneringen",
         new_appointment: "Nieuwe Afspraak",
         edit_appointment: "Afspraak bewerken",
         options: "Opties",
@@ -2328,7 +2332,6 @@ const translations = {
         appointment_updated: "Afspraak bijgewerkt!",
         appointment_created: "Afspraak aangemaakt!",
         no_matching_appointments: "Geen overeenkomende afspraken gevonden.",
-        no_email_warning: "Geen e-mail opgegeven. Herinneringen worden niet verzonden.",
         status_canceled: "Geannuleerd",
         status_noshow: "Niet komen opdagen",
         today: "Vandaag",
@@ -2420,8 +2423,6 @@ const translations = {
         date_time: "Fecha y Hora",
         extras: "Extras (Opcional)",
         extras_placeholder: "Nombre del Cliente, Notas, etc.",
-        client_email: "Email del Cliente (Opcional) <strong style='display: block; font-weight: normal; font-size: 0.8rem; opacity: 0.8; margin-top: 4px;'>Al proporcionar el correo electrónico del cliente, Trimlyt puede enviar recordatorios para reducir las ausencias.</strong>",
-        client_email_placeholder: "Opcional, para recordatorios",
         new_appointment: "Nueva Cita",
         edit_appointment: "Editar Cita",
         options: "Opciones",
@@ -2448,7 +2449,6 @@ const translations = {
         appointment_updated: "¡Cita actualizada!",
         appointment_created: "¡Cita creada!",
         no_matching_appointments: "No se encontraron citas coincidentes.",
-        no_email_warning: "No se proporcionó correo electrónico. No se enviarán recordatorios.",
         status_canceled: "Cancelado",
         status_noshow: "No se presentó",
         today: "Hoy",
@@ -2540,8 +2540,6 @@ const translations = {
         date_time: "Date & Heure",
         extras: "Extras (Optionnel)",
         extras_placeholder: "Nom du client, notes, etc.",
-        client_email: "E-mail du Client (Optionnel) <strong style='display: block; font-weight: normal; font-size: 0.8rem; opacity: 0.8; margin-top: 4px;'>En fournissant l'e-mail du client, Trimlyt peut envoyer des rappels pour réduire les non-présentations.</strong>",
-        client_email_placeholder: "Optionnel, pour les rappels",
         new_appointment: "Nouveau Rendez-vous",
         edit_appointment: "Modifier Rendez-vous",
         options: "Options",
@@ -2568,7 +2566,6 @@ const translations = {
         appointment_updated: "Rendez-vous mis à jour !",
         appointment_created: "Rendez-vous créé !",
         no_matching_appointments: "Aucun rendez-vous correspondant trouvé.",
-        no_email_warning: "Aucun e-mail fourni. Les rappels ne seront pas envoyés.",
         status_canceled: "Annulé",
         status_noshow: "Non présenté",
         today: "Aujourd'hui",
@@ -2660,8 +2657,6 @@ const translations = {
         date_time: "تاریخ و زمان",
         extras: "توضیحات (اختیاری)",
         extras_placeholder: "نام مشتری، یادداشت‌ها و غیره",
-        client_email: "ایمیل مشتری (اختیاری) <strong style='display: block; font-weight: normal; font-size: 0.8rem; opacity: 0.8; margin-top: 4px; text-align: right;'>با ارائه ایمیل مشتری، تریم‌لیت می‌تواند برای کاهش عدم حضور، یادآوری ارسال کند.</strong>",
-        client_email_placeholder: "اختیاری، برای یادآوری‌ها",
         new_appointment: "نوبت جدید",
         edit_appointment: "ویرایش نوبت",
         options: "گزینه‌ها",
@@ -2688,7 +2683,6 @@ const translations = {
         appointment_updated: "نوبت به‌روز شد!",
         appointment_created: "نوبت ایجاد شد!",
         no_matching_appointments: "نوبتی پیدا نشد.",
-        no_email_warning: "ایمیلی ارائه نشده است. یادآوری‌ها ارسال نخواهند شد.",
         status_canceled: "لغو شده",
         status_noshow: "نیامد",
         today: "امروز",
@@ -2780,8 +2774,6 @@ const translations = {
         date_time: "Data e Hora",
         extras: "Extras (Opcional)",
         extras_placeholder: "Nome do Cliente, Notas, etc.",
-        client_email: "Email do Cliente (Opcional) <strong style='display: block; font-weight: normal; font-size: 0.8rem; opacity: 0.8; margin-top: 4px;'>Ao fornecer o e-mail do cliente, o Trimlyt pode enviar lembretes para reduzir o não comparecimento.</strong>",
-        client_email_placeholder: "Opcional, para lembretes",
         new_appointment: "Novo Agendamento",
         edit_appointment: "Editar Agendamento",
         options: "Opções",
@@ -2808,7 +2800,6 @@ const translations = {
         appointment_updated: "Agendamento atualizado!",
         appointment_created: "Agendamento criado!",
         no_matching_appointments: "Nenhum agendamento correspondente encontrado.",
-        no_email_warning: "Nenhum e-mail fornecido. Lembretes não serão enviados.",
         status_canceled: "Cancelado",
         status_noshow: "Não apareceu",
         today: "Hoje",
@@ -2900,8 +2891,6 @@ const translations = {
         date_time: "दिनांक और समय",
         extras: "अतिरिक्त (वैकल्पिक)",
         extras_placeholder: "ग्राहक का नाम, नोट्स, आदि।",
-        client_email: "ग्राहक का ईमेल (वैकल्पिक) <strong style='display: block; font-weight: normal; font-size: 0.8rem; opacity: 0.8; margin-top: 4px;'>ग्राहक का ईमेल प्रदान करके, Trimlyt नो-शो को कम करने के लिए रिमाइंडर भेज सकता है।</strong>",
-        client_email_placeholder: "वैकल्पिक, अनुस्मारक के लिए",
         new_appointment: "नया अपॉइंटमेंट",
         edit_appointment: "अपॉइंटमेंट संपादित करें",
         options: "विकल्प",
@@ -2928,7 +2917,6 @@ const translations = {
         appointment_updated: "अपॉइंटमेंट अपडेट किया गया!",
         appointment_created: "अपॉइंटमेंट बनाया गया!",
         no_matching_appointments: "कोई मेल खाने वाला अपॉइंटमेंट नहीं मिला।",
-        no_email_warning: "कोई ईमेल प्रदान नहीं किया गया। अनुस्मारक नहीं भेजे जाएंगे।",
         status_canceled: "रद्द किया गया",
         status_noshow: "नहीं आया",
         today: "आज",
@@ -3000,7 +2988,7 @@ function applyTranslations() {
                 // Preserve HTML structure if needed, but for now textContent is safer
                 // If we need HTML (like bold tags in guides), we can use innerHTML
                 // The guide texts have \n which we might want to convert to <br>
-                if (key.includes('guide_text') || key === 'client_email') {
+                if (key.includes('guide_text')) {
                     el.innerHTML = translations[lang][key].replace(/\n/g, '<br>');
                 } else {
                     el.textContent = translations[lang][key];
