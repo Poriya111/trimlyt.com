@@ -1150,3 +1150,11 @@ select {
         justify-content: center;
     }
 }
+.logo-t {
+    color: #6366f1;
+    font-weight: 700;
+}
+.header-logo {
+    font-size: 25px;
+    font-weight: 500;
+}

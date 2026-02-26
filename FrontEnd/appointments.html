@@ -44,6 +44,10 @@
             <button id="loadMoreBtn" class="btn btn-secondary btn-sm" style="margin: 20px auto; display: none; width: auto;" data-i18n="load_more">Load More</button>
             <footer class="app-footer">
                 <p><span class="logo-t">T</span>rimlyt &copy; 2026 <strong>Version 1.0</strong></p>
+                                <nav style="display:flex;gap:12px;align-items:center;">
+                    <a href="privacyPolicy.html">Privacy Policy</a>
+                    <a href="termsOfService.html">Terms</a>
+                </nav>
             </footer>
         </main>
 
@@ -122,32 +126,9 @@
         <!-- Info Modal -->
         <div id="infoModal" class="modal hidden">
             <div class="modal-content">
-                    <h3>Appointments Guide</h3>
-                    <p style="color: var(--text-muted); line-height: 1.6;">Manage your schedule and history from here. This modal explains the list, actions, and how integration behaves so there are no surprises.</p>
-
-                    <h4 style="margin-top:12px;">List & Search</h4>
-                    <p style="color: var(--text-muted);">Use the search box to filter by service name, extras, or client email. Upcoming appointments are shown first; past appointments appear under "Past".</p>
-
-                    <h4 style="margin-top:12px;">Actions</h4>
-                    <ul style="color: var(--text-muted); line-height: 1.6;">
-                        <li><strong>Edit:</strong> Change time, service, or details. Edits sync to Google Calendar if connected.</li>
-                        <li><strong>Finish:</strong> Marks the appointment as completed and counts toward revenue.</li>
-                        <li><strong>No Show / Cancel:</strong> Updates status; canceled/no-show appointments will be removed from Google Calendar when applicable.</li>
-                        <li><strong>Delete:</strong> Removes appointment from Trimlyt and Google Calendar (if previously synced).</li>
-                    </ul>
-
-                    <h4 style="margin-top:12px;">Adding Appointments</h4>
-                    <p style="color: var(--text-muted);">Use <strong>+ Add</strong> to create appointments directly in Trimlyt for best accuracy. For quick in-person jobs use <strong>Walk-in</strong>, which creates a finished appointment immediately.</p>
-
-                    <h4 style="margin-top:12px;">Google Calendar Integration</h4>
-                    <p style="color: var(--text-muted); line-height: 1.6;">When you choose to import from Google Calendar, Trimlyt only imports events you explicitly mark with the <strong>TL [Service] [Price]</strong> format in the event title (example: <em>TL Haircut 25</em>). This prevents accidental imports of personal events.</p>
-
-                    <div style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 8px; margin: 8px 0; color: var(--text-muted);">
-                        <strong>Note:</strong> Trimlyt does not access or send your emails. Import and sync are limited to calendar events and basic identity information.
-                    </div>
-
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 12px;">Privacy & terms: <a href="privacyPolicy.html" style="color: var(--primary-color);">Privacy Policy</a> • <a href="termsOfService.html" style="color: var(--primary-color);">Terms of Service</a></p>
-                    <button id="closeInfoModal" class="btn btn-primary">Got it</button>
+                    <h3 data-i18n="appointments_guide">Appointments Guide</h3>
+                    <div data-i18n="appointments_guide_html"></div>
+                    <button id="closeInfoModal" class="btn btn-primary" data-i18n="got_it">Got it</button>
                     <button class="scroll-to-bottom" title="Scroll to end" aria-label="Scroll to end">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
                     </button>

@@ -53,6 +53,10 @@
             </form>
             <footer class="app-footer">
                 <p><span class="logo-t">T</span>rimlyt &copy; 2026 <strong>Version 1.0</strong></p>
+                                <nav style="display:flex;gap:12px;align-items:center;">
+                    <a href="privacyPolicy.html">Privacy Policy</a>
+                    <a href="termsOfService.html">Terms</a>
+                </nav>
             </footer>
         </main>
 
@@ -60,12 +64,7 @@
         <div id="infoModal" class="modal hidden">
             <div class="modal-content">
                 <h3 data-i18n="profile_guide">Profile Guide</h3>
-                <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 24px;" data-i18n="profile_guide_text">
-                    Update your account information.
-                    <br><br>
-                    • <strong>Avatar:</strong> Tap the camera icon to upload a custom profile picture.<br>
-                    • <strong>Security:</strong> Update your password here. You will stay logged in after changing it.
-                </p>
+                <div data-i18n="profile_guide_html"></div>
                 <button id="closeInfoModal" class="btn btn-primary" data-i18n="got_it">Got it</button>
             </div>
         </div>

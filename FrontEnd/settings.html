@@ -122,6 +122,10 @@
             </form>
             <footer class="app-footer">
                 <p><span class="logo-t">T</span>rimlyt &copy; 2026 <strong>Version 1.0</strong></p>
+                                <nav style="display:flex;gap:12px;align-items:center;">
+                    <a href="privacyPolicy.html">Privacy Policy</a>
+                    <a href="termsOfService.html">Terms</a>
+                </nav>
             </footer>
         </main>
 <br><br><br><br>
@@ -173,26 +177,9 @@
         <!-- Info Modal -->
         <div id="infoModal" class="modal hidden">
             <div class="modal-content">
-                    <h3>Settings Guide</h3>
-                    <p style="color: var(--text-muted); line-height: 1.6;">Configure Trimlyt to match your workflow. Below are the main settings and how they affect the app.</p>
-
-                    <h4 style="margin-top:12px;">Integrations</h4>
-                    <p style="color: var(--text-muted);">Connect your Google account to import calendar events (TL format). We only request minimal permissions: read/write calendar events and your basic account email. We do not access or send your email.</p>
-
-                    <h4 style="margin-top:12px;">Monthly Goal</h4>
-                    <p style="color: var(--text-muted);">Set your target revenue for the month. The Dashboard progress bar uses this value.</p>
-
-                    <h4 style="margin-top:12px;">Services</h4>
-                    <p style="color: var(--text-muted);">Manage the list of services you offer. These populate the appointment creation form and help with quick entry and analytics.</p>
-
-                    <h4 style="margin-top:12px;">Appointment Gap</h4>
-                    <p style="color: var(--text-muted);">This enforces a minimum time between bookings to avoid overlap. If an appointment conflicts with this gap it will be rejected when creating or updating.</p>
-
-                    <h4 style="margin-top:12px;">Auto-Complete</h4>
-                    <p style="color: var(--text-muted);">If an appointment passes and is still "Scheduled", Trimlyt can automatically mark it as Finished, Canceled, or No Show based on your preference. This helps keep your records up-to-date.</p>
-
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 12px;">Privacy & terms: <a href="privacyPolicy.html" style="color: var(--primary-color);">Privacy Policy</a> • <a href="termsOfService.html" style="color: var(--primary-color);">Terms of Service</a></p>
-                    <button id="closeInfoModal" class="btn btn-primary">Got it</button>
+                    <h3 data-i18n="settings_guide">Settings Guide</h3>
+                    <div data-i18n="settings_guide_html"></div>
+                    <button id="closeInfoModal" class="btn btn-primary" data-i18n="got_it">Got it</button>
                     <button class="scroll-to-bottom" title="Scroll to end" aria-label="Scroll to end">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
                     </button>
