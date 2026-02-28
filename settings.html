@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BSTHEG1925"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-BSTHEG1925');
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trimlyt Settings</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header header-with-action">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button id="infoBtn" class="btn-icon" style="color: var(--text-muted); font-size: 1.2rem;">ⓘ</button>
+            </div>
+            <div class="header-logo"><span class="logo-t">T</span>rimlyt</div>
+            <div id="profileBtn" class="profile-pic-placeholder"></div>
+        </header>
+
+        <main class="content">
+
+<br><br>
+            <form id="settingsForm">
+                                <!-- Integrations Section -->
+                <h3 style="font-size: 1rem; margin-bottom: 12px; color: var(--text-muted);" data-i18n="integrations">Integrations</h3>
+                <div class="card" style="padding: 16px; margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <div style="font-weight: 600;">Google Calendar & Gmail</div>
+                        <div id="googleStatus" style="font-size: 0.8rem; color: var(--text-muted);">Checking...</div>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;" data-i18n="google_integration_desc">Connect to sync with Google Calendar. Trimlyt only accesses calendar events and basic identity.</p>
+                    <button type="button" id="connectGoogleBtn" class="btn btn-secondary btn-sm" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;"><span style="font-size: 1.2em;">G</span> <span data-i18n="connect_google">Connect Google Account</span></button>
+                    
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,0.05);">
+                        <label for="googleImportKeyword" style="font-size: 0.9rem; font-weight: 600; display: block; margin-bottom: 8px;" data-i18n="google_import_keyword">Google Import Keyword</label>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;" data-i18n="google_import_keyword_desc">Events with this title will be imported. Default is 'TL'.</p>
+                        <input type="text" id="googleImportKeyword" placeholder="TL" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); margin-bottom: 8px;">
+                        <button type="button" id="saveGoogleKeywordBtn" class="btn btn-text" style="padding: 8px 0; font-size: 0.85rem;" data-i18n="save">Save</button>
+                    </div>
+                </div>
+<br><br>
+                <div class="input-group">
+                    <label for="monthlyGoal" data-i18n="monthly_goal">Monthly Revenue Goal</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" id="monthlyGoal" placeholder="5000" required>
+                        <button type="button" id="saveGoalBtn" class="btn btn-primary btn-sm" style="width: auto; margin-bottom: 0;" data-i18n="save">Save</button>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label data-i18n="services">Services</label>
+                    <button type="button" id="manageServicesBtn" class="btn btn-secondary" data-i18n="manage_services">Manage Services</button>
+                </div>
+
+                <div class="input-group">
+                    <label for="currency" data-i18n="currency">Currency</label>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="currency">
+                            <option value="$">USD ($)</option>
+                            <option value="€">EUR (€)</option>
+                            <option value="£">GBP (£)</option>
+                            <option value="CA$">CAD (CA$)</option>
+                        </select>
+                        <button type="button" id="saveCurrencyBtn" class="btn btn-primary btn-sm" style="width: auto; margin-bottom: 0;" data-i18n="save">Save</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="language" data-i18n="language">Language</label>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="language">
+                            <option value="en">English</option>
+                            <option value="de">German</option>
+                            <option value="nl">Dutch</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
+                            <option value="fa">Persian</option>
+                            <option value="pt">Portuguese</option>
+                            <option value="hi">Indian (Hindi)</option>
+                        </select>
+                        <button type="button" id="saveLanguageBtn" class="btn btn-primary btn-sm" style="width: auto; margin-bottom: 0;" data-i18n="save">Save</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="appointmentGap" data-i18n="gap">Minimum Appointment Gap</label>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="appointmentGap">
+                            <option value="0" data-i18n="no_gap">No Gap</option>
+                            <option value="15">15 Minutes</option>
+                            <option value="30">30 Minutes</option>
+                            <option value="45">45 Minutes</option>
+                            <option value="60" data-i18n="hour_default">1 Hour (Default)</option>
+                            <option value="75">1 Hour 15 Min</option>
+                            <option value="90">1 Hour 30 Min</option>
+                            <option value="105">1 Hour 45 Min</option>
+                            <option value="120">2 Hours</option>
+                            <option value="150">2 Hours 30 Min</option>
+                        </select>
+                        <button type="button" id="saveGapBtn" class="btn btn-primary btn-sm" style="width: auto; margin-bottom: 0;" data-i18n="save">Save</button>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="autoCompleteStatus" data-i18n="auto_complete">Auto-Complete Appointments</label>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;" data-i18n="auto_complete_desc">If an appointment time passes without a manual update, automatically set the status to:</p>
+                    <select id="autoCompleteStatus">
+                        <option value="finished" data-i18n="finished_default">Finished (Default)</option>
+                        <option value="canceled" data-i18n="canceled">Canceled</option>
+                        <option value="noshow" data-i18n="didnt_show_up">Didn't Show Up</option>
+                    </select>
+                </div>
+<br>
+                <div class="input-group" style="display: flex; justify-content: space-between; align-items: center;">
+                    <label for="themeToggle" style="margin: 0;" data-i18n="dark_mode">Dark Mode</label>
+                    <label class="switch">
+                        <input type="checkbox" id="themeToggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </form>
+            <footer class="app-footer">
+                <p><span class="logo-t">T</span>rimlyt &copy; 2026 <strong>Version 1.0</strong></p>
+                                <nav style="display:flex;gap:12px;align-items:center;">
+                    <a href="privacyPolicy.html">Privacy Policy</a>
+                    <a href="termsOfService.html">Terms</a>
+                </nav>
+            </footer>
+        </main>
+<br><br><br><br>
+        <!-- Onboarding / Tasks Modal -->
+        <div id="onboardingModal" class="modal hidden">
+            <div class="modal-content">
+                <button id="closeOnboardingBtn" style="position: absolute; top: 12px; right: 12px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">✕</button>
+                <div id="onboardingContent"></div>
+            </div>
+        </div>
+
+        <!-- Profile / Account Modal -->
+        <div id="profileModal" class="modal hidden">
+            <div class="modal-content">
+                <h3 data-i18n="account">Account</h3>
+                <p style="text-align: center; margin-bottom: 24px; color: var(--text-muted);">barber@example.com</p>
+                <a href="profile.html" class="btn-option" style="text-decoration: none;" data-i18n="edit_profile">Edit Profile</a>
+                <a href="subscription.html" class="btn-option" style="text-decoration: none;" data-i18n="subscription">Subscription</a>
+                <button id="logoutBtn" class="btn-option btn-danger" data-i18n="logout">Log Out</button>
+                <button id="closeProfileModal" class="btn btn-text" data-i18n="close">Close</button>
+            </div>
+        </div>
+
+        <!-- Services Modal -->
+        <div id="servicesModal" class="modal hidden">
+            <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+                <h3 data-i18n="services_modal_title">My Services</h3>
+
+                <form id="addServiceForm" style="margin-bottom: 24px; display: flex; gap: 8px; align-items: center;">
+                    <div class="input-group" style="flex: 2; margin-bottom: 0;">
+                        <input type="text" id="newServiceName" placeholder="Name" required data-i18n="service_name">
+                    </div>
+                    <div class="input-group" style="flex: 1; margin-bottom: 0;">
+                        <input type="number" id="newServicePrice" placeholder="Price" required data-i18n="price">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="height: 47px; width: 47px; padding: 0; margin-bottom: 0; font-size: 1.5rem; flex-shrink: 0;">+</button>
+                </form>
+
+                <div id="servicesList" style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Services will be injected here -->
+                    <div class="empty-state" style="padding: 20px;">
+                        <p data-i18n="no_services_yet">No services added yet.</p>
+                    </div>
+                </div>
+                <button id="closeServicesModal" class="btn btn-text" style="margin-top: 20px;" data-i18n="close">Close</button>
+            </div>
+        </div>
+
+        <!-- Info Modal -->
+        <div id="infoModal" class="modal hidden">
+            <div class="modal-content">
+                    <h3 data-i18n="settings_guide">Settings Guide</h3>
+                    <div data-i18n="settings_guide_html"></div>
+                    <button id="closeInfoModal" class="btn btn-primary" data-i18n="got_it">Got it</button>
+                    <button class="scroll-to-bottom" title="Scroll to end" aria-label="Scroll to end">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+                    </button>
+            </div>
+        </div>
+
+        <nav class="bottom-nav">
+            <a href="dashboard.html" class="nav-item" data-i18n="dashboard">Dashboard</a>
+            <a href="appointments.html" class="nav-item" data-i18n="history">Appointments</a>
+            <a href="settings.html" class="nav-item active" data-i18n="settings">Settings</a>
+        </nav>
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>
